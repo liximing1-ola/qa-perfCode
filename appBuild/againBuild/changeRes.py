@@ -172,7 +172,6 @@ def checkIconPath(p_path):
     return True
 
 
-
 if __name__ == '__main__':
     # python changeResOld.py 解压包地址 资源地址
     # 修改背景色值
