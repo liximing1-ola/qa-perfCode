@@ -1,14 +1,71 @@
 import csv
-from pylab import *
-from matplotlib import *
-def csvToChart():
+import platform
+from matplotlib.pylab import *
+def csvToChart_win():
     if len(sys.argv) != 2:
-        print('input path')
+        print('win need input one path')
         exit(1)
-
     now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
     csv_path = sys.argv[1]
     perf = re.split('\\\\', csv_path)[4]
+    y = csvToList(csv_path, perf)
+    x = range(1, len(y)+1)
+
+    if perf == 'FPS':
+        title_show = 'BANBAN_FPS'
+        try:
+            if y and len(x) == len(y):
+                plt.plot(x, y)
+                plt.xlabel('Time(s)', color='r')
+                plt.ylabel('FPS', color='r')
+                plt.title(title_show, color='g')
+                plt.grid(True)
+                plt.savefig('E:/report/FPS/{}.png'.format(now))
+                plt.show()
+            else:
+                print(' x != y')
+        except Exception as error:
+            print(error)
+
+    elif perf == 'CPU':
+        title_show = 'BANBAN_CPU'
+        try:
+            if y and len(x) == len(y):
+                plt.plot(x, y)
+                plt.xlabel('Time(s)', color='r')
+                plt.ylabel('CPU(%)', color='r')
+                plt.title(title_show, color='g')
+                plt.grid(True)
+                plt.savefig('E:/report/CPU/{}.png'.format(now))
+                plt.show()
+            else:
+                print(' x != y')
+        except Exception as error:
+            print(error)
+
+    elif perf == 'MEM':
+        title_show = 'BANBAN_MEM'
+        try:
+            if y and len(x) == len(y):
+                plt.plot(x, y)
+                plt.xlabel('Time(s)', color='r')
+                plt.ylabel('MEM(M)', color='r')
+                plt.title(title_show, color='g')
+                plt.grid(True)
+                plt.savefig('E:/report/MEM/{}.png'.format(now))
+                plt.show()
+            else:
+                print(' x != y')
+        except Exception as error:
+            print(error)
+
+def csvToChart_mac():
+    if len(sys.argv) != 3:
+        print('mac need input two key')
+        exit(1)
+    now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
+    csv_path = sys.argv[1]
+    perf = sys.argv[2]
     y = csvToList(csv_path, perf)
     x = range(1, len(y)+1)
 
@@ -94,4 +151,7 @@ def csvToList(csv_path, perf):
 
 
 if __name__=='__main__':
-    csvToChart()
+    if platform.system() == 'Windows':
+        csvToChart_win()
+    elif platform.system() == 'Darwin':
+        csvToChart_mac()
