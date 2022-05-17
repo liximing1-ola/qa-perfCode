@@ -2,9 +2,20 @@ import os
 import time
 import shutil
 import subprocess
+BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+data_path = BASE_PATH + '/report'
+re_data_path = data_path + '/prefData'
+
+def check_file():
+    if not os.path.exists(data_path):
+        os.mkdir(data_path)
+    path_list = ['/MEM', '/CPU', '/FPS']
+    for i in path_list:
+        if not os.path.exists(i):
+            os.mkdir(data_path + i)
 
 def lsPhoneFile():
-    command = 'adb shell ls /storage/emulated/0/solopi/'  # solopi 选择的路径
+    command = 'adb shell ls /storage/emulated/0/solopi/'  # solopi 地址路径
     solopi_path = 'records/records'  # 自己通过solopi的路径设置
     if not is_exist(command):
         exit(1)
@@ -36,8 +47,7 @@ def is_exist(path):
     return True
 
 def changeFile():
-    data_path = 'E:/report'
-    re_data_path = data_path + '/prefData'
+    check_file()
     now_time = time.strftime('%Y%m%d%H', time.localtime(time.time()))
     print('当前执行时间: {} \n'.format(now_time))
     lsPhoneFile()

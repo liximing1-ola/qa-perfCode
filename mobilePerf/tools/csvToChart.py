@@ -7,8 +7,7 @@ def csvToChart():
 
     now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
     csv_path = sys.argv[1]
-    perf = re.split('\\\\', csv_path)[2]
-
+    perf = re.split('\\\\', csv_path)[4]
     y = csvToList(csv_path, perf)
     x = range(1, len(y)+1)
 
