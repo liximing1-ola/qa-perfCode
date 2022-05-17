@@ -9,10 +9,10 @@ re_data_path = data_path + '/prefData'
 def check_file():
     if not os.path.exists(data_path):
         os.mkdir(data_path)
-    path_list = ['/MEM', '/CPU', '/FPS']
-    for i in path_list:
-        if not os.path.exists(i):
-            os.mkdir(data_path + i)
+        path_list = ['/MEM', '/CPU', '/FPS']
+        for i in path_list:
+            if not os.path.exists(i):
+                os.mkdir(data_path + i)
 
 def lsPhoneFile():
     command = 'adb shell ls /storage/emulated/0/solopi/'  # solopi 地址路径
@@ -47,7 +47,6 @@ def is_exist(path):
     return True
 
 def changeFile():
-    check_file()
     now_time = time.strftime('%Y%m%d%H', time.localtime(time.time()))
     print('当前执行时间: {} \n'.format(now_time))
     lsPhoneFile()
@@ -55,6 +54,7 @@ def changeFile():
     if int(perf_data_path) == 1:
         print('\n退出成功')
         exit(1)
+    check_file()
     if os.path.exists(re_data_path):
         shutil.rmtree(re_data_path)
     cmd = 'adb pull /storage/emulated/0/solopi/records/records/{} {}'.format(perf_data_path, data_path)

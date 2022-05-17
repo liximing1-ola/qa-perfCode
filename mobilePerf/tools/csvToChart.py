@@ -1,4 +1,5 @@
 import csv
+import os
 import platform
 from matplotlib.pylab import *
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
