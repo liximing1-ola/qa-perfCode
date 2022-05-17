@@ -1,6 +1,8 @@
 import csv
 import platform
 from matplotlib.pylab import *
+BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+data_path = BASE_PATH + '/report'
 def csvToChart_win():
     if len(sys.argv) != 2:
         print('win need input one path')
@@ -20,7 +22,7 @@ def csvToChart_win():
                 plt.ylabel('FPS', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
-                plt.savefig('E:/report/FPS/{}.png'.format(now))
+                plt.savefig(data_path + '/FPS/{}.png'.format(now))
                 plt.show()
             else:
                 print(' x != y')
@@ -36,7 +38,7 @@ def csvToChart_win():
                 plt.ylabel('CPU(%)', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
-                plt.savefig('E:/report/CPU/{}.png'.format(now))
+                plt.savefig(data_path + '/CPU/{}.png'.format(now))
                 plt.show()
             else:
                 print(' x != y')
@@ -52,7 +54,7 @@ def csvToChart_win():
                 plt.ylabel('MEM(M)', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
-                plt.savefig('E:/report/MEM/{}.png'.format(now))
+                plt.savefig(data_path + '/MEM/{}.png'.format(now))
                 plt.show()
             else:
                 print(' x != y')
@@ -65,7 +67,7 @@ def csvToChart_mac():
         exit(1)
     now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
     csv_path = sys.argv[1]
-    perf = sys.argv[2]
+    perf = sys.argv[2].upper()
     y = csvToList(csv_path, perf)
     x = range(1, len(y)+1)
 
@@ -78,7 +80,7 @@ def csvToChart_mac():
                 plt.ylabel('FPS', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
-                plt.savefig('E:/report/FPS/{}.png'.format(now))
+                plt.savefig(data_path + '/FPS/{}.png'.format(now))
                 plt.show()
             else:
                 print(' x != y')
@@ -94,7 +96,7 @@ def csvToChart_mac():
                 plt.ylabel('CPU(%)', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
-                plt.savefig('E:/report/CPU/{}.png'.format(now))
+                plt.savefig(data_path + '/CPU/{}.png'.format(now))
                 plt.show()
             else:
                 print(' x != y')
@@ -110,7 +112,7 @@ def csvToChart_mac():
                 plt.ylabel('MEM(M)', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
-                plt.savefig('E:/report/MEM/{}.png'.format(now))
+                plt.savefig(data_path + '/MEM/{}.png'.format(now))
                 plt.show()
             else:
                 print(' x != y')
