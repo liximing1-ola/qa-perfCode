@@ -1,5 +1,6 @@
 import csv
 from pylab import *
+from matplotlib import *
 def csvToChart():
     if len(sys.argv) != 2:
         print('input path')
