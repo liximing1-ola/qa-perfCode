@@ -1,18 +1,34 @@
 import csv
-import os
+import os  # for in mac
 import platform
 from matplotlib.pylab import *
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 data_path = BASE_PATH + '/report'
 def csvToChart_win():
-    if len(sys.argv) != 2:
-        print('win need input one path')
-        exit(1)
+    csv_path = ''
+    if len(sys.argv) == 3:
+        csv_path = sys.argv[1]
+        perf = sys.argv[2].upper()
+        # perf = re.split('\\\\', csv_path)[4]
+        print(perf, csv_path)
+    else:
+        perf = sys.argv[1].upper()
+        for i, j, k in os.walk(data_path + '/{}'.format(perf)):
+            if len(k) == 0:
+                print('未生成有效数据')
+                exit(1)
+            csv_path = data_path + '/{}/{}'.format(perf, k[-1])  # 默认时间倒序最后一个csv文件，根据需要修改
+        print(perf, csv_path)
+
     now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
-    csv_path = sys.argv[1]
-    perf = re.split('\\\\', csv_path)[4]
     y = csvToList(csv_path, perf)
-    x = range(1, len(y)+1)
+    x = range(1, len(y) + 1)
+    #  设置图片格式像素等
+    plt.rcParams['figure.figsize'] = [8.0, 4.0]
+    plt.rcParams['image.interpolation'] = 'nearest'
+    plt.rcParams['image.cmap'] = 'gray'
+    plt.rcParams['savefig.dpi'] = 200
+    plt.rcParams['figure.dpi'] = 100
 
     if perf == 'FPS':
         title_show = 'BANBAN_FPS'
@@ -63,14 +79,27 @@ def csvToChart_win():
             print(error)
 
 def csvToChart_mac():
-    if len(sys.argv) != 3:
-        print('mac need input two key')
+    if len(sys.argv) != 2:
+        print('mac need input one key, eg（cpu, mem, fps）')
         exit(1)
+    perf = sys.argv[1].upper()
+    csv_path = ''
+    for i, j, k in os.walk(data_path + '/{}'.format(perf)):
+        if len(k) == 0:
+            print('未生成有效数据')
+            exit(1)
+        csv_path = data_path + '/{}/{}'.format(perf, k[-1])  # 默认时间倒序最后一个csv文件，根据需要修改
+        print(perf, csv_path)
     now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
-    csv_path = sys.argv[1]
-    perf = sys.argv[2].upper()
     y = csvToList(csv_path, perf)
-    x = range(1, len(y)+1)
+    x = range(1, len(y) + 1)
+
+    #  设置图片格式像素等
+    plt.rcParams['figure.figsize'] = [8.0, 4.0]
+    plt.rcParams['image.interpolation'] = 'nearest'
+    plt.rcParams['image.cmap'] = 'gray'
+    plt.rcParams['savefig.dpi'] = 200
+    plt.rcParams['figure.dpi'] = 100
 
     if perf == 'FPS':
         title_show = 'BANBAN_FPS'
@@ -120,6 +149,7 @@ def csvToChart_mac():
         except Exception as error:
             print(error)
 
+
 def csvToList(csv_path, perf):
     y = []
     if perf == 'FPS':
@@ -153,7 +183,7 @@ def csvToList(csv_path, perf):
         print('输入异常')
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     if platform.system() == 'Windows':
         csvToChart_win()
     elif platform.system() == 'Darwin':

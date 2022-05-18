@@ -47,38 +47,45 @@ def is_exist(path):
     return True
 
 def changeFile():
-    now_time = time.strftime('%Y%m%d%H', time.localtime(time.time()))
-    print('当前执行时间: {} \n'.format(now_time))
-    lsPhoneFile()
-    perf_data_path = input('请选择复制要获取的性能采集文件夹：')
-    if int(perf_data_path) == 1:
-        print('\n退出成功')
+    try:
+        now_time = time.strftime('%Y%m%d%H', time.localtime(time.time()))
+        print('当前执行时间: {} \n'.format(now_time))
+        lsPhoneFile()
+        perf_data_path = input('请选择复制要获取的性能采集文件夹：')
+        if int(perf_data_path) == 1:
+            print('\n退出成功')
+            exit(1)
+        check_file()
+        if os.path.exists(re_data_path):
+            shutil.rmtree(re_data_path)
+        cmd = 'adb pull /storage/emulated/0/solopi/records/records/{} {}'.format(perf_data_path, data_path)
+        os.popen(cmd)
+        time.sleep(1)
+        os.rename('{}/{}'.format(data_path, perf_data_path), '{}'.format(re_data_path))
+        now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
+        file_or_dir = os.listdir(re_data_path)
+        for file_dir in file_or_dir:
+            if file_dir.startswith('帧率_FPS'):
+                shutil.move(os.path.join(re_data_path, file_dir), data_path + '/FPS' + '/FPS_{}.csv'.format(now))
+                print('fps 执行成功')
+
+            elif file_dir.startswith('PSS-main'):
+                shutil.move(os.path.join(re_data_path, file_dir), data_path + '/MEM' + '/MEM_{}.csv'.format(now))
+                print('mem 执行成功')
+
+            elif file_dir.startswith('应用进程-main'):
+                shutil.move(os.path.join(re_data_path, file_dir), data_path + '/CPU' + '/CPU_{}.csv'.format(now))
+                print('cpu 执行成功')
+            else:
+                pass
+
+        print('执行成功，请查看本地路径 {}'.format(data_path))
+    except EOFError as error:
+        print('输入异常', error)
         exit(1)
-    check_file()
-    if os.path.exists(re_data_path):
-        shutil.rmtree(re_data_path)
-    cmd = 'adb pull /storage/emulated/0/solopi/records/records/{} {}'.format(perf_data_path, data_path)
-    os.popen(cmd)
-    time.sleep(1)
-    os.rename('{}/{}'.format(data_path, perf_data_path), '{}'.format(re_data_path))
-    now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
-    file_or_dir = os.listdir(re_data_path)
-    for file_dir in file_or_dir:
-        if file_dir.startswith('帧率_FPS'):
-            shutil.move(os.path.join(re_data_path, file_dir), data_path + '/FPS' + '/FPS_{}.csv'.format(now))
-            print('fps 执行成功')
-
-        elif file_dir.startswith('PSS-main'):
-            shutil.move(os.path.join(re_data_path, file_dir), data_path + '/MEM' + '/MEM_{}.csv'.format(now))
-            print('mem 执行成功')
-
-        elif file_dir.startswith('应用进程-main'):
-            shutil.move(os.path.join(re_data_path, file_dir), data_path + '/CPU' + '/CPU_{}.csv'.format(now))
-            print('cpu 执行成功')
-        else:
-            pass
-
-    print('执行成功，请查看本地路径 {}'.format(data_path))
+    except Exception as error:
+        print(error)
+        exit(1)
 
 
 if __name__ == '__main__':
