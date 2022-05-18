@@ -2,9 +2,11 @@ import os
 import time
 import shutil
 import subprocess
+
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 data_path = BASE_PATH + '/report'
 re_data_path = data_path + '/prefData'
+
 
 def check_file():
     if not os.path.exists(data_path):
@@ -14,21 +16,27 @@ def check_file():
             if not os.path.exists(i):
                 os.mkdir(data_path + i)
 
+
 def lsPhoneFile():
     command = 'adb shell ls /storage/emulated/0/solopi/'  # solopi 地址路径
     solopi_path = 'records/records'  # 自己通过solopi的路径设置
+    file_list = []
     if not is_exist(command):
         exit(1)
-    res = subprocess.Popen(command+solopi_path,
-                           shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    res = subprocess.Popen(command + solopi_path,
+                           shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
     stdout, stderr = res.communicate()
     if res.returncode == 0:
-        print('性能采集点文件夹：\n{}'.format(stdout.decode('utf-8')))
+        print('性能采集点文件夹(正序排列)：\n{}'.format(stdout))
+        file_list.append(res.communicate()[0])
+        print(file_list[0].split('\n'))
+        return file_list[0].split('\n')
     elif stdout == '' and res.poll() is not None:
         exit(1)
     else:
         print('请检查设备USB链接 or 确保数据输出到指定文件夹\n')
         exit(1)
+
 
 def is_exist(path):
     """
@@ -46,12 +54,13 @@ def is_exist(path):
         return False
     return True
 
+
 def changeFile():
     try:
         now_time = time.strftime('%Y%m%d%H', time.localtime(time.time()))
         print('当前执行时间: {} \n'.format(now_time))
-        lsPhoneFile()
-        perf_data_path = input('请选择复制要获取的性能采集文件夹：')
+        # perf_data_path = str(input('请选择复制要获取的性能采集文件夹(1=退出)：{}'.format(lsPhoneFile()[-2])))
+        perf_data_path = lsPhoneFile()[-2]
         if int(perf_data_path) == 1:
             print('\n退出成功')
             exit(1)
