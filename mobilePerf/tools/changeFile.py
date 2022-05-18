@@ -27,9 +27,8 @@ def lsPhoneFile():
                            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
     stdout, stderr = res.communicate()
     if res.returncode == 0:
-        print('性能采集点文件夹(正序排列)：\n{}'.format(stdout))
+        print('性能采集点文件夹(时间正序排列)：\n{}'.format(stdout))
         file_list.append(res.communicate()[0])
-        print(file_list[0].split('\n'))
         return file_list[0].split('\n')
     elif stdout == '' and res.poll() is not None:
         exit(1)
@@ -60,7 +59,9 @@ def changeFile():
         now_time = time.strftime('%Y%m%d%H', time.localtime(time.time()))
         print('当前执行时间: {} \n'.format(now_time))
         # perf_data_path = str(input('请选择复制要获取的性能采集文件夹(1=退出)：{}'.format(lsPhoneFile()[-2])))
-        perf_data_path = lsPhoneFile()[-2]
+        file_name= lsPhoneFile()[-2]
+        print('默认获取的性能采集文件夹: {}\n'.format(file_name))
+        perf_data_path = file_name
         if int(perf_data_path) == 1:
             print('\n退出成功')
             exit(1)
