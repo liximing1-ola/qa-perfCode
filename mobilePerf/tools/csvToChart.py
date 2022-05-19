@@ -35,7 +35,7 @@ def csvToChart_win():
         try:
             if y and len(x) == len(y):
                 plt.plot(x, y)
-                plt.xlabel('Time(s)', color='r')
+                plt.xlabel('Time', color='r')
                 plt.ylabel('FPS', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
@@ -51,7 +51,7 @@ def csvToChart_win():
         try:
             if y and len(x) == len(y):
                 plt.plot(x, y)
-                plt.xlabel('Time(s)', color='r')
+                plt.xlabel('Time', color='r')
                 plt.ylabel('CPU(%)', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
@@ -67,7 +67,7 @@ def csvToChart_win():
         try:
             if y and len(x) == len(y):
                 plt.plot(x, y)
-                plt.xlabel('Time(s)', color='r')
+                plt.xlabel('Time', color='r')
                 plt.ylabel('MEM(M)', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
@@ -106,7 +106,7 @@ def csvToChart_mac():
         try:
             if y and len(x) == len(y):
                 plt.plot(x, y)
-                plt.xlabel('Time(s)', color='r')
+                plt.xlabel('Time', color='r')
                 plt.ylabel('FPS', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
@@ -122,7 +122,7 @@ def csvToChart_mac():
         try:
             if y and len(x) == len(y):
                 plt.plot(x, y)
-                plt.xlabel('Time(s)', color='r')
+                plt.xlabel('Time', color='r')
                 plt.ylabel('CPU(%)', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
@@ -138,7 +138,7 @@ def csvToChart_mac():
         try:
             if y and len(x) == len(y):
                 plt.plot(x, y)
-                plt.xlabel('Time(s)', color='r')
+                plt.xlabel('Time', color='r')
                 plt.ylabel('MEM(M)', color='r')
                 plt.title(title_show, color='g')
                 plt.grid(True)
@@ -159,6 +159,7 @@ def csvToList(csv_path, perf):
                     y.append(round(float(data_list[1])))
                 else:
                     pass
+            del y[1::2]  # 隔一个取一个
             return y
 
     elif perf == 'CPU':
@@ -168,6 +169,7 @@ def csvToList(csv_path, perf):
                     y.append(round(float(data_list[1])))
                 else:
                     pass
+            del y[1::2]
             return y
 
     elif perf == 'MEM':
@@ -177,6 +179,7 @@ def csvToList(csv_path, perf):
                     y.append(round(float(data_list[1])))
                 else:
                     pass
+            del y[1::2]
             return y
 
     else:
