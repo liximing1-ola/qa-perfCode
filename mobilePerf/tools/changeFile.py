@@ -7,6 +7,7 @@ BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 data_path = BASE_PATH + '/report'
 re_data_path = data_path + '/prefData'
 
+
 def lsPhoneFile():
     command = 'adb shell ls /storage/emulated/0/solopi/'  # solopi 地址路径
     solopi_path = 'records/records'  # 自己通过solopi的路径设置
@@ -49,7 +50,7 @@ def changeFile():
         now_time = time.strftime('%Y%m%d%H', time.localtime(time.time()))
         print('当前执行时间: {} \n'.format(now_time))
         # perf_data_path = str(input('请选择复制要获取的性能采集文件夹(1=退出)：{}'.format(lsPhoneFile()[-2])))
-        file_name= lsPhoneFile()[-2]
+        file_name = lsPhoneFile()[-2]
         print('默认获取的性能采集文件夹: {}\n'.format(file_name))
         perf_data_path = file_name
         if not os.path.exists(data_path):

@@ -2,8 +2,11 @@ import csv
 import os  # for in mac
 import platform
 from matplotlib.pylab import *
+
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 data_path = BASE_PATH + '/report'
+
+
 def csvToChart(platforms):
     csv_path = ''
     y_name = ' '
@@ -43,11 +46,11 @@ def csvToChart(platforms):
 
     title_show = 'BANBAN_{}_Analysis'.format(perf)  # 根据APP调整展示title
     if perf == 'FPS':
-        y_name='FPS(gfxinfo)'
+        y_name = 'FPS(gfxinfo)'
     elif perf == 'CPU':
-        y_name='CPU(%)'
+        y_name = 'CPU(%)'
     elif perf == 'MEM':
-        y_name='MEM(m)'
+        y_name = 'MEM(m)'
     y = csvToList(csv_path, perf)
     x = range(1, len(y) + 1)
     try:
@@ -62,12 +65,14 @@ def csvToChart(platforms):
     except Exception as error:
         print(error)
 
+
 def csvToList(csv_path, perf):
     y = []
     if perf == 'FPS':
         with open(csv_path, 'r+', encoding='gbk') as file:
             for data_list in [i for i in csv.reader(file)][1:]:
-                if round(float(data_list[1])) != 0 and round(float(data_list[1])) <= 60:  # 根据设备gfxinfo信息计算1s内超时帧时间，反推出实际帧率，根据实际设备修改阈值
+                if round(float(data_list[1])) != 0 and round(
+                        float(data_list[1])) <= 60:  # 根据设备gfxinfo信息计算1s内超时帧时间，反推出实际帧率，根据实际设备修改阈值
                     y.append(round(float(data_list[1])))
             del y[1::2]  # 隔一个取一个值，影响不大
             return y
