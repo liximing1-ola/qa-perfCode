@@ -13,6 +13,7 @@ def lsPhoneFile():
     solopi_path = 'records/records'  # 自己通过solopi的路径设置
     file_list = []
     if not is_exist(command):
+        print('请检查设备USB链接 or 确保数据输出到指定文件夹\n')
         exit(1)
     res = subprocess.Popen(command + solopi_path,
                            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
@@ -24,8 +25,7 @@ def lsPhoneFile():
     elif stdout == '' and res.poll() is not None:
         exit(1)
     else:
-        print('请检查设备USB链接 or 确保数据输出到指定文件夹\n')
-        exit(1)
+        pass
 
 
 def is_exist(path):
