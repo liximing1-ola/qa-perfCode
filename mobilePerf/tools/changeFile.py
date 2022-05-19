@@ -7,16 +7,6 @@ BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 data_path = BASE_PATH + '/report'
 re_data_path = data_path + '/prefData'
 
-
-def check_file():
-    if not os.path.exists(data_path):
-        os.mkdir(data_path)
-        path_list = ['/MEM', '/CPU', '/FPS']
-        for i in path_list:
-            if not os.path.exists(i):
-                os.mkdir(data_path + i)
-
-
 def lsPhoneFile():
     command = 'adb shell ls /storage/emulated/0/solopi/'  # solopi 地址路径
     solopi_path = 'records/records'  # 自己通过solopi的路径设置
@@ -62,10 +52,12 @@ def changeFile():
         file_name= lsPhoneFile()[-2]
         print('默认获取的性能采集文件夹: {}\n'.format(file_name))
         perf_data_path = file_name
-        if int(perf_data_path) == 1:
-            print('\n退出成功')
-            exit(1)
-        check_file()
+        if not os.path.exists(data_path):
+            os.mkdir(data_path)
+            path_list = ['/MEM', '/CPU', '/FPS']
+            for i in path_list:
+                if not os.path.exists(data_path + i):
+                    os.mkdir(data_path + i)
         if os.path.exists(re_data_path):
             shutil.rmtree(re_data_path)
         cmd = 'adb pull /storage/emulated/0/solopi/records/records/{} {}'.format(perf_data_path, data_path)
@@ -77,19 +69,19 @@ def changeFile():
         for file_dir in file_or_dir:
             if file_dir.startswith('帧率_FPS'):
                 shutil.move(os.path.join(re_data_path, file_dir), data_path + '/FPS' + '/FPS_{}.csv'.format(now))
-                print('fps 执行成功')
+                print('FPS 执行成功')
 
             elif file_dir.startswith('PSS-main'):
                 shutil.move(os.path.join(re_data_path, file_dir), data_path + '/MEM' + '/MEM_{}.csv'.format(now))
-                print('mem 执行成功')
+                print('MEM 执行成功')
 
             elif file_dir.startswith('应用进程-main'):
                 shutil.move(os.path.join(re_data_path, file_dir), data_path + '/CPU' + '/CPU_{}.csv'.format(now))
-                print('cpu 执行成功')
+                print('CPU 执行成功')
             else:
                 pass
 
-        print('执行成功，请查看本地路径 {}'.format(data_path))
+        print('执行成功，请查看本地路径下文件 {}'.format(data_path))
     except EOFError as error:
         print('输入异常', error)
         exit(1)
