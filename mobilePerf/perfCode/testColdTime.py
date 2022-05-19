@@ -1,5 +1,7 @@
 import os
 import time
+
+
 # 测试冷启动时间
 # 创建App进程, 加载相关资源, 启动Main Thread, 初始化首屏Activity
 def startUpTime(device, pg_name, pga_name):
@@ -34,6 +36,7 @@ def startUpTime(device, pg_name, pga_name):
     except os.error as error:
         print(error)
 
+
 def getDev():
     """
     :return: 获得设备id
@@ -48,6 +51,7 @@ def getDev():
     except Exception as error:
         print(error)
 
+
 def main_cold():
     # 取测试机-s
     s = getDev()
@@ -58,7 +62,7 @@ def main_cold():
     total_time = 0
     for i in time_list:
         total_time += i
-    avg_time = total_time/len(time_list)
+    avg_time = total_time / len(time_list)
     print('冷启动平均耗时： {}ms'.format(avg_time))
 
 

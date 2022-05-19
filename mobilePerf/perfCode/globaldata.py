@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import threading
+
+
 # 记录运行时需要共享的全局变量
 class RuntimeData:
     # 记录pid变更前的pid

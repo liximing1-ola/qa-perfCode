@@ -3,6 +3,7 @@ import os
 import sys
 import csv
 import time
+
 BaseDir = os.path.dirname(__file__)
 sys.path.append(os.path.join(BaseDir, '../..'))
 from mobilePerf.perfCode.androidDevice import AndroidDevice
@@ -11,6 +12,8 @@ from mobilePerf.perfCode.common.utils import TimeUtils, FileUtils
 from mobilePerf.perfCode.common.utils import ms2s
 from mobilePerf.perfCode.common.log import logger
 from mobilePerf.perfCode.globaldata import RuntimeData
+
+
 class LogcatMonitor(Monitor):
     def __init__(self, device_id, package=None, **regx_config):
         """构造器

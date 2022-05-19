@@ -2,13 +2,16 @@ import csv
 import traceback
 from pylab import *
 import os
-BaseDir=os.path.dirname(__file__)
+
+BaseDir = os.path.dirname(__file__)
 sys.path.append(os.path.join(BaseDir, '../..'))
 from mobilePerf.perfCode.common.config import config
 from mobilePerf.perfCode.androidDevice import AndroidDevice
 from mobilePerf.perfCode.common.utils import TimeUtils, FileUtils
 from mobilePerf.perfCode.common.log import logger
 from mobilePerf.perfCode.globaldata import RuntimeData
+
+
 class PckCpuInfo(object):
     """
     使用top 直接进行统计.top中的数值基本上是瞬时值，采样的数据也是来自于/proc/pid/stat(具体进程的cpu%)
@@ -18,7 +21,8 @@ class PckCpuInfo(object):
     # User 0%, System 0%, IOW 0%, IRQ 0%
 
     RE_CPU = re.compile(r'User (\d+)\%\, System (\d+)\%\, IOW (\d+)\%\, IRQ (\d+)\%')
-    RE_CPU_O = re.compile(r'(\d+)\%cpu\s+(\d+)\%user\s+(\d+)\%nice\s+(\d+)\%sys\s+(\d+)\%idle\s+(\d+)\%iow\s+(\d+)\%irq\s+(\d+)\%sirq\s+(\d+)\%host')
+    RE_CPU_O = re.compile(
+        r'(\d+)\%cpu\s+(\d+)\%user\s+(\d+)\%nice\s+(\d+)\%sys\s+(\d+)\%idle\s+(\d+)\%iow\s+(\d+)\%irq\s+(\d+)\%sirq\s+(\d+)\%host')
 
     def __init__(self, packages, source, sdkVersion):
         """
@@ -65,7 +69,8 @@ class PckCpuInfo(object):
                     self.datetime = TimeUtils.getCurrentTime()
                     if package == target_pck:  # 只统计包名完全相同的进程
                         if int(self.pid) > 0:
-                            logger.debug("cpuinfos, into _parse_pck packege is target package, pid is :" +str(self.pid))
+                            logger.debug(
+                                "cpuinfos, into _parse_pck packege is target package, pid is :" + str(self.pid))
                             cpu_index = self.get_cpucol_index()
                             uid_index = self.get_uidcol_index()
                             if len(tmp) > cpu_index:
@@ -74,8 +79,8 @@ class PckCpuInfo(object):
                                 self.pck_cpu_rate = self.pck_cpu_rate.replace("%", "")
                             if len(tmp) > uid_index:
                                 self.uid = tmp[uid_index]
-                            package_dic={"package": package, "pid": self.pid, "pid_cpu": str(self.pck_cpu_rate),
-                                         "uid": self.uid}
+                            package_dic = {"package": package, "pid": self.pid, "pid_cpu": str(self.pck_cpu_rate),
+                                           "uid": self.uid}
                             # 将top中解析出来的信息保存在一个列表中，作为一条记录添加在package_list中
                             logger.debug("package: " + package + ", cpu_rate: " + str(self.pck_cpu_rate))
                             self.total_pid_cpu += float(self.pck_cpu_rate)
@@ -110,7 +115,8 @@ class PckCpuInfo(object):
                 self.iow_rate = match.group(6)
                 self.irq_rate = match.group(7)
                 self.device_cpu_rate = int(self.user_rate) + int(self.system_rate)
-                logger.debug("8.0 or higher, user_rate: " + str(self.user_rate) + ", sys: " + str(self.system_rate) + ",device cpu: " +str(self.device_cpu_rate))
+                logger.debug("8.0 or higher, user_rate: " + str(self.user_rate) + ", sys: " + str(
+                    self.system_rate) + ",device cpu: " + str(self.device_cpu_rate))
                 logger.debug("idle_rate: %s" % self.idle_rate)
 
     def sum_procs_cpurate(self):
@@ -128,7 +134,8 @@ class PckCpuInfo(object):
             self.uid_cpu_rate = str(summ) + "%"
             for i in range(len(self.package_list)):
                 self.package_list[i].append(self.uid_cpu_rate)
-                logger.debug("cpuinfos, sum_procs_cpurate , afer append uid cpu rate, the package list is : "+str(self.package_list))
+                logger.debug("cpuinfos, sum_procs_cpurate , afer append uid cpu rate, the package list is : " + str(
+                    self.package_list))
 
     def get_cpucol_index(self):
         """
@@ -195,11 +202,13 @@ class PckCpuInfo(object):
                                 return key
         return default
 
+
 class CpuCollector(object):
     """
     通过top命令搜集cpu信息的一个类
     """
-    def __init__(self, device, packages, interval=1, timeout=24*60*60):
+
+    def __init__(self, device, packages, interval=1, timeout=24 * 60 * 60):
         """
         :param device: 具体的设备实例
         :param packages: 应用的包名列表
@@ -220,7 +229,7 @@ class CpuCollector(object):
         if ret and 'Invalid argument "-b"' in ret:
             logger.debug("top -b not support")
             self.top_cmd = 'top -n 1 -d %d' % self._interval
-        logger.debug("sdk version : " +str(self.sdkversion))
+        logger.debug("sdk version : " + str(self.sdkversion))
 
     def get_sdkversion(self):
         sdk = self.device.adb.get_sdk_version()
@@ -257,7 +266,7 @@ class CpuCollector(object):
         out = self._top_pipe.stdout.read()
         error = self._top_pipe.stderr.read()
         if error:
-            logger.error("into cpuinfos error : "+str(error))
+            logger.error("into cpuinfos error : " + str(error))
             return
         out = str(out, "utf-8")
         out.replace('\r', '')
@@ -266,7 +275,7 @@ class CpuCollector(object):
             writer.write(TimeUtils.getCurrentTime() + " top info:\n")
             writer.write(out + "\n\n")
         #  避免文件过大，超过100M清理
-        if FileUtils.get_FileSize(top_file)>100:
+        if FileUtils.get_FileSize(top_file) > 100:
             os.remove(top_file)
         return PckCpuInfo(self.packages, out, self.sdkversion)
 
@@ -297,7 +306,8 @@ class CpuCollector(object):
             logger.error(e)
         while not self._stop_event.is_set() and time.time() < end_time:
             try:
-                logger.debug("---------------cpuinfos, into _collect_package_cpu_thread loop thread is : " + str(threading.current_thread().name))
+                logger.debug("---------------cpuinfos, into _collect_package_cpu_thread loop thread is : " + str(
+                    threading.current_thread().name))
                 before = time.time()
                 # 为了cpu值的准确性，将采集的时间间隔放在top命令中了
                 cpu_info = self._top_cpuinfo()
@@ -307,11 +317,13 @@ class CpuCollector(object):
                 if cpu_info is None or cpu_info.source == '' or not cpu_info.package_list:
                     logger.debug("cpuinfos, can't get cpu info, continue")
                     continue
-                self.cpu_list.extend([TimeUtils.getCurrentTime(), str(cpu_info.device_cpu_rate), cpu_info.user_rate, cpu_info.system_rate, cpu_info.idle_rate])
+                self.cpu_list.extend([TimeUtils.getCurrentTime(), str(cpu_info.device_cpu_rate), cpu_info.user_rate,
+                                      cpu_info.system_rate, cpu_info.idle_rate])
                 for i in range(0, len(self.packages)):
-                    if len(cpu_info.package_list)==len(self.packages):
-                        self.cpu_list.extend([cpu_info.package_list[i]["package"], cpu_info.package_list[i]["pid"], cpu_info.package_list[i]["pid_cpu"]])
-                if len(self.packages)>1:
+                    if len(cpu_info.package_list) == len(self.packages):
+                        self.cpu_list.extend([cpu_info.package_list[i]["package"], cpu_info.package_list[i]["pid"],
+                                              cpu_info.package_list[i]["pid_cpu"]])
+                if len(self.packages) > 1:
                     self.cpu_list.append(cpu_info.total_pid_cpu)
                 #  校准时间，由于top执行需要耗时，需要将这个损耗加上去
                 logger.info("INFO: CpuMonitor save cpu_device_list: " + str(self.cpu_list))
@@ -334,10 +346,12 @@ class CpuCollector(object):
                     self.cpu_queue.task_done()
         logger.debug("stop event is set or timeout")
 
+
 class CpuMonitor(object):
     """
     cpu 监控器
     """
+
     def __init__(self, device_id, packages, interval=5, timeout=24 * 60 * 60):
         self.device = AndroidDevice(device_id)
         self.packages = packages
@@ -349,7 +363,8 @@ class CpuMonitor(object):
         :return:
         """
         if not RuntimeData.package_save_path:
-            RuntimeData.package_save_path = os.path.join(os.path.abspath(os.path.join(os.getcwd(), "../..")), 'results', self.packages[0])
+            RuntimeData.package_save_path = os.path.join(os.path.abspath(os.path.join(os.getcwd(), "../..")), 'results',
+                                                         self.packages[0])
             if not os.path.exists(RuntimeData.package_save_path):
                 os.makedirs(RuntimeData.package_save_path)
         self.start_time = start_time
@@ -366,12 +381,14 @@ class CpuMonitor(object):
     def save(self):
         pass
 
+
 def csvToList(csv_path):
     y = []
     with open(csv_path, 'r+', encoding='utf-8') as f:
         for data_list in [i for i in csv.reader(f)][1:]:
             y.append(round(float(data_list[7])))
         return y
+
 
 def chart_cpu(x, y, t, details):
     """
@@ -394,11 +411,13 @@ def chart_cpu(x, y, t, details):
     except Exception as error:
         print(error)
 
+
 def main_cpu(num):
     monitor = CpuMonitor(config.deviceId, [config.package], 20)
     monitor.start(TimeUtils.getCurrentTimeUnderline())
     time.sleep(20 * num)  # 执行时间
     monitor.stop()
+
 
 def main_chart():
     # csv_path = BaseDir + '/results/' + config.package + '/cpuInfo.csv'

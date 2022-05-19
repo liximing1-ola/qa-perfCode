@@ -1,5 +1,7 @@
 import os
 import time
+
+
 def hotTime(device, pg_name, pga_name):
     """
     :param device:
@@ -36,6 +38,7 @@ def hotTime(device, pg_name, pga_name):
     except os.error as error:
         print(error)
 
+
 # 获得设备ID
 def getDev():
     """
@@ -51,6 +54,7 @@ def getDev():
     except Exception as error:
         print(error)
 
+
 # 模拟发送keyEvent
 def keyEvent(keycode):
     """
@@ -62,6 +66,7 @@ def keyEvent(keycode):
     os.popen(cmd)
     time.sleep(1)
 
+
 def main_hot():
     """
     :return:
@@ -71,7 +76,7 @@ def main_hot():
     an = 'com.imbb.banban.android/.MainActivity'  # aapt dump badging + apk
     print(s, pn, an)
     hot_list = hotTime(s, pn, an)
-    print(sum(hot_list)/len(hot_list))
+    print(sum(hot_list) / len(hot_list))
 
 
 if __name__ == '__main__':

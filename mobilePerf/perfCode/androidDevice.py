@@ -7,6 +7,7 @@ import subprocess
 import sys
 import platform
 import traceback
+
 BaseDir = os.path.dirname(__file__)
 sys.path.append(os.path.join(BaseDir, '../..'))
 from mobilePerf.perfCode.common.log import logger
@@ -227,7 +228,7 @@ class ADB(object):
         timeout = 10
         if "timeout" in kwds:
             timeout = kwds['timeout']
-        if timeout != None and timeout > 0:
+        if timeout is not None and timeout > 0:
             # timeout = None 或者小于等于0时，一直等待执行结果
             threading.Thread(None, self._timer, (process, timeout))
         (out, error) = process.communicate()
