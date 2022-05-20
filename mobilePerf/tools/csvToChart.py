@@ -35,6 +35,8 @@ def csvToChart(platforms):
                 exit(1)
             csv_path = data_path + '/{}/{}'.format(perf, csv_path[-1])  # 默认时间倒序最后一个csv文件，根据需要修改
 
+    if not csv_path:
+        return
     print(csv_path, perf)
 
     now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
