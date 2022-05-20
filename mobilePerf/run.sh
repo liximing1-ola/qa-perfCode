@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 basedir=`cd $(dirname $0); pwd -P`
-echo $basedir
-echo 11111
-python ~/PycharmProjects/perfCode/mobilePerf/tools/changeFile.py
-python ~/PycharmProjects/perfCode/mobilePerf/tools/csvToChart.py cpu
-python ~/PycharmProjects/perfCode/mobilePerf/tools/csvToChart.py fps
-python ~/PycharmProjects/perfCode/mobilePerf/tools/csvToChart.py mem
+python $basedir/tools/changeFile.py
+python $basedir/tools/csvToChart.py cpu
+python $basedir/tools/csvToChart.py fps
+python $basedir/tools/csvToChart.py mem
