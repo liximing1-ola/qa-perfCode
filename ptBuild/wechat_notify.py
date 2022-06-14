@@ -23,7 +23,7 @@ if int(buildNum) < 0:
     logValues = {
             "msgtype": "markdown",
             "markdown": {
-                "content" : changeLog
+                "content": changeLog
             }
         }  
     logResponse = requests.post(url, data = json.dumps(logValues), headers = headers)
@@ -33,7 +33,7 @@ elif int(buildNum) == 0:
     logValues = {
             "msgtype": "markdown",
             "markdown": {
-                "content" : f'''{changeLog}
+                "content": f'''{changeLog}
 > Trigger: **{buildUser}**
 > Branch: **{buildBranch}**
 '''

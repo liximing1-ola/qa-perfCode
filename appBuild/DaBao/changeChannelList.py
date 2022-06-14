@@ -7,13 +7,13 @@ if len(sys.argv) != 5:
     print('-----------INPUT[apkPath][apkName][appVersion][CPU]-----------')
     quit(0)
 apk_file_name = sys.argv[1]
-app_name  = sys.argv[2]
+app_name = sys.argv[2]
 app_version = sys.argv[3]
 app_so = sys.argv[4]
 
 # 出主渠道包
 def process_one_conf(channel_list):
-    now = time.strftime('%Y-%m-%d',time.localtime(time.time()))
+    now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
     # 本地路径
     output_path ='E:/Build/{}_{}_{}_{}'.format(app_name, app_version, app_so, now)
     if os.path.exists(output_path):
@@ -40,11 +40,6 @@ def change_name(path):
             os.rename(apk_name + '.apk', app_name_2 + '.apk')
         else:
             print('Not OK')
-
-def reName(new_file,old_file):
-    os.remove(old_file)
-    chdir(os.path.dirname(new_file))
-    os.rename(new_file, old_file)
 
 def appBuild():
     if app_name.startswith('banban'):
