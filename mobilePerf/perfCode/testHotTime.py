@@ -74,6 +74,11 @@ def main_hot():
     s = getDev()
     pn = 'com.imbb.banban.android'
     an = 'com.imbb.banban.android/.MainActivity'  # aapt dump badging + apk
+
+    # TT语音
+    # pn = 'com.yiyou.ga'
+    # an = 'com.yiyou.ga/com.yiyou.ga.client.BlankActivity'
+
     print(s, pn, an)
     hot_list = hotTime(s, pn, an)
     print(sum(hot_list) / len(hot_list))

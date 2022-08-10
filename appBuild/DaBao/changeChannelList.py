@@ -48,8 +48,11 @@ def appBuild():
     elif app_name.startswith('havefun'):
         channel = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb', 'meizu', 'tt']
         process_one_conf(channel)
-    elif app_name.startswith('peini'):
+    elif app_name.startswith('peini') or app_name.startswith('bbxq') or app_name.startswith('qrql'):
         channel = ['oppo', 'vivo', 'huawei']
+        process_one_conf(channel)
+    elif app_name.startswith('zhizhi'):
+        channel = ['oppo', 'vivo', 'huawei', 'xiaomi', 'yyb']
         process_one_conf(channel)
     else:
         channel_names = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb', 'meizu', 'pp', 'qihu', 'anzhi', 'baidu',

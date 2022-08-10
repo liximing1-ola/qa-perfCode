@@ -1,7 +1,5 @@
 import os
 import time
-
-
 # 测试冷启动时间
 # 创建App进程, 加载相关资源, 启动Main Thread, 初始化首屏Activity
 def startUpTime(device, pg_name, pga_name):
@@ -55,8 +53,14 @@ def getDev():
 def main_cold():
     # 取测试机-s
     s = getDev()
+    # banban
     pn = 'com.imbb.banban.android'
     an = 'com.imbb.banban.android/.MainActivity'  # aapt dump badging + apk
+
+    # TT语音
+    # pn = 'com.yiyou.ga'
+    # an = 'com.yiyou.ga/com.yiyou.ga.client.BlankActivity'
+
     print('设备id：{}, APP包名：{}, activity：{}'.format(s, pn, an))
     time_list = startUpTime(s, pn, an)
     total_time = 0
