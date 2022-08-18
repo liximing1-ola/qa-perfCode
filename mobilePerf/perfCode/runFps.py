@@ -41,7 +41,7 @@ def getDev():
     except Exception as error:
         print(error)
 
-def testFps():
+def Fps():
     print('当前设备id: {}'.format(getDev()))
     i=1
     while i <= 2000:
@@ -72,4 +72,4 @@ def testFps():
 
 
 if __name__ == '__main__':
-    testFps()
+    Fps()

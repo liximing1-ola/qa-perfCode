@@ -9,9 +9,10 @@ re_data_path = data_path + '/prefData'
 
 
 def lsPhoneFile():
-    command = 'adb shell ls /storage/emulated/0/solopi/'  # solopi 地址路径
+    command = 'adb shell ls /storage/emulated/0/solopi/records/'  # solopi 地址路径
     solopi_path = 'records/records'  # 自己通过solopi的路径设置
     file_list = []
+    use_file = []
     if not is_exist(command):
         print('请检查设备USB链接 or 确保数据输出到指定文件夹\n')
         exit(1)
@@ -21,7 +22,12 @@ def lsPhoneFile():
     if res.returncode == 0:
         print('性能采集点文件夹(时间正序排列)：\n{}'.format(stdout))
         file_list.append(res.communicate()[0])
-        return file_list[0].split('\n')
+        file_list = file_list[0].split('\n')
+        for i in file_list:
+            if len(i) == 29:  # 生成文件夹长度
+                use_file.append(i)
+        print(use_file)
+        return use_file[-1]
     elif stdout == '' and res.poll() is not None:
         exit(1)
     else:
@@ -50,7 +56,7 @@ def changeFile():
         now_time = time.strftime('%Y%m%d%H', time.localtime(time.time()))
         print('当前执行时间: {} \n'.format(now_time))
         # perf_data_path = str(input('请选择复制要获取的性能采集文件夹(1=退出)：{}'.format(lsPhoneFile()[-2])))
-        file_name = lsPhoneFile()[-2]
+        file_name = lsPhoneFile()
         print('默认获取的性能采集文件夹: {}\n'.format(file_name))
         perf_data_path = file_name
         if not os.path.exists(data_path):
@@ -61,7 +67,7 @@ def changeFile():
                     os.mkdir(data_path + i)
         if os.path.exists(re_data_path):
             shutil.rmtree(re_data_path)
-        cmd = 'adb pull /storage/emulated/0/solopi/records/records/{} {}'.format(perf_data_path, data_path)
+        cmd = 'adb pull /storage/emulated/0/solopi/records/records/records/{} {}'.format(perf_data_path, data_path)
         os.popen(cmd)
         time.sleep(1)
         os.rename('{}/{}'.format(data_path, perf_data_path), '{}'.format(re_data_path))

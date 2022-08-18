@@ -46,7 +46,7 @@ def csvToChart(platforms):
     plt.rcParams['savefig.dpi'] = 200
     plt.rcParams['figure.dpi'] = 100
 
-    title_show = 'banban_{}_Analysis'.format(perf)  # 根据APP调整展示title
+    title_show = 'Banban_{}_Analysis'.format(perf)  # 根据APP调整展示title
     if perf == 'FPS':
         y_name = 'FPS(gfxinfo)'
     elif perf == 'CPU':
