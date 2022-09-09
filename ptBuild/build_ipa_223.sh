@@ -20,24 +20,25 @@ function buildStore() {
 
     ipaPath=$projectPath/build/ios/ipa/Partying.ipa
     
+    # shellcheck disable=SC2086
     flutter build ios --release --build-number $versionCode --build-name $versionName
     bundle exec fastlane ios store
 
-    cd $projectPath/ci
-    upload_ipa $ipaPath
+    cd "$projectPath"/ci
+    upload_ipa "$ipaPath"
 
     # upload dSYM
     uploadymbolsPath=$projectPath/ios/Pods/FirebaseCrashlytics/upload-symbols
     plistPath=$projectPath/ios/Runner/GoogleService-Info.plist
     dsymPath=$projectPath/build/ios/archive/Runner.xcarchive/dSYMs/Runner.app.dSYM
     if [ -f "$dsymPath" ];then
-      $uploadymbolsPath -gsp $plistPath -p ios $dsymPath
+      $uploadymbolsPath -gsp "$plistPath" -p ios "$dsymPath"
     fi
 }
 
-cd $projectPath
+cd "$projectPath"
 
-if [ $buildType == "debug" ]; then
+if [ "$buildType" == "debug" ]; then
     ipaPath="$projectPath/build/ios/ipa/Partying.ipa"
     if [ -d "$projectPath/build/ios" ]; then
         rm -rf $projectPath/build/ios

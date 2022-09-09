@@ -22,9 +22,10 @@ function branch_is_in_remote() {
     local git_dir='./.git/'
     
     # if $2 is set, git_dir=$2
-    [ -z ${2} ] || git_dir=${2}
+    [ -z "${2}" ] || git_dir=${2}
 
-    local existed_in_remote=$(git --git-dir ${git_dir} ls-remote --heads origin ${branch})
+    # shellcheck disable=SC2155
+    local existed_in_remote=$(git --git-dir "${git_dir}" ls-remote --heads origin "${branch}")
 
     if [[ -z ${existed_in_remote} ]]; then
         echo 0
@@ -40,12 +41,14 @@ function is_branch_exist() {
     local git_dir='./.git/'
     
     # if $2 is set, git_dir=$2
-    [ -z ${2} ] || git_dir=${2}
+    [ -z "${2}" ] || git_dir=${2}
 
     retval=1
+    # shellcheck disable=SC2086
     branch_exist=$( branch_is_in_local $BRANCH_NAME $git_dir)
     if [[ $branch_exist == 0 ]]; then
-        branch_exist=$( branch_is_in_remote $BRANCH_NAME $git_dir)
+        # shellcheck disable=SC2086
+        branch_exist=$( branch_is_in_remote "$BRANCH_NAME" $git_dir)
         if [[ $branch_exist == 0 ]]; then
             retval=0
         fi
@@ -60,22 +63,26 @@ function checkout_and_pull() {
     local git_dir='./.git/'
 
     # if $2 is set, git_dir=$2
-    [ -z ${2} ] || git_dir=${2}
+    [ -z "${2}" ] || git_dir=${2}
 
     # clear all local changes
-    git --git-dir $git_dir checkout .
+    git --git-dir "$git_dir" checkout .
+    # shellcheck disable=SC2086
     git --git-dir $git_dir clean -df
 
     # fetch new branch that might not in local
-    git --git-dir $git_dir fetch origin $branch
+    git --git-dir "$git_dir" fetch origin "$branch"
 
     # force to checkout the $branch
+    # shellcheck disable=SC2086
     git --git-dir $git_dir checkout -f $branch
 
     # clear all changes inclueds by checkouting new branch
-    git --git-dir $git_dir checkout .
+    git --git-dir "$git_dir" checkout .
+    # shellcheck disable=SC2086
     git --git-dir $git_dir clean -df
 
     # pull the new changes into local
+    # shellcheck disable=SC2086
     git --git-dir $git_dir pull origin $branch --progress -v
 } 

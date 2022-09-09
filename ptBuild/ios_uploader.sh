@@ -34,12 +34,12 @@ function validate_and_upload(){
     echo "running validate cmd" $validate
 
     runValidate="$($validate)"
-    echo $runValidate
+    echo "$runValidate"
 
     if [ -z "$runValidate" ]; then
         echo -e "033[31m validate failed \033[0m"
     else
-        upload_ipa $ipa_file
+        upload_ipa "$ipa_file"
     fi
 }
 
@@ -48,9 +48,12 @@ function validate_and_upload(){
 function enter_api_key() {
     if [ -z "$1" ]; then
         echo -e "\033[31m Please enter apiKey \033[0m"
+        # shellcheck disable=SC2162
         read key
+        # shellcheck disable=SC2233
         while ([ -z "$key" ]); do
             echo -e "\033[31m Please enter apiKey \033[0m"
+            # shellcheck disable=SC2162
             read key
         done
         apiKey=$key
@@ -60,9 +63,12 @@ function enter_api_key() {
 
     if [ -z "$2" ]; then
         echo -e "\033[31m Please enter apiIssuer \033[0m"
+        # shellcheck disable=SC2162
         read issuer
+        # shellcheck disable=SC2233
         while ([ -z "$issuer" ]); do
             echo -e "\033[31m Please enter apiIssuer \033[0m"
+            # shellcheck disable=SC2162
             read issuer
         done
         apiIssuer=$issuer

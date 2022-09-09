@@ -22,4 +22,4 @@ releaseNotes="Happy New Year  Partyingers !\nBug fixes and improvements."
 echo ${platformMap[*]}
 echo "$releaseNotes"
 
-./build_app.sh ${platformMap[$buildPlatform]} ${typeMap[$buildType]} $versionName $versionCode $debugModel "$releaseNotes" $ciNum
+./build_app.sh "${platformMap[$buildPlatform]}" "${typeMap[$buildType]}" "$versionName" "$versionCode" "$debugModel" "$releaseNotes" "$ciNum"
