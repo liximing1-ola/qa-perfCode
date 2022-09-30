@@ -6,11 +6,11 @@ import subprocess
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 data_path = BASE_PATH + '/report'
 re_data_path = data_path + '/prefData'
+solopi_path = 'records/records/records'  # 自己通过solopi的路径设置
 
 
 def lsPhoneFile():
     command = 'adb shell ls /storage/emulated/0/solopi/records/'  # solopi 地址路径
-    solopi_path = 'records/records'  # 自己通过solopi的路径设置
     file_list = []
     use_file = []
     if not is_exist(command):
@@ -67,7 +67,7 @@ def changeFile():
                     os.mkdir(data_path + i)
         if os.path.exists(re_data_path):
             shutil.rmtree(re_data_path)
-        cmd = 'adb pull /storage/emulated/0/solopi/records/records/records/{} {}'.format(perf_data_path, data_path)
+        cmd = 'adb pull /storage/emulated/0/solopi/records/{}/{} {}'.format(solopi_path, perf_data_path, data_path)
         os.popen(cmd)
         time.sleep(1)
         os.rename('{}/{}'.format(data_path, perf_data_path), '{}'.format(re_data_path))
