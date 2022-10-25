@@ -53,6 +53,8 @@ def csvToChart(platforms):
         y_name = 'CPU(%)'
     elif perf == 'MEM':
         y_name = 'MEM(m)'
+    elif perf == 'TEMP':
+        y_name = 'Temp(℃)'
     y = csvToList(csv_path, perf)
     x = range(1, len(y) + 1)
     try:
@@ -90,6 +92,15 @@ def csvToList(csv_path, perf):
     elif perf == 'MEM':
         with open(csv_path, 'r+', encoding='gbk') as file:
             for data_list in [i for i in csv.reader(file)][1:]:  # 顶层activity所在进程的PSS（实际使用内存）
+                if round(float(data_list[1])) != 0:
+                    y.append(round(float(data_list[1])))
+            print('最大值：{}'.format(max(y)))
+            print('均值：{}'.format(sum(y)/len(y)))
+            del y[1::2]
+            return y
+    elif perf == 'TEMP':
+        with open(csv_path, 'r+', encoding='gbk') as file:
+            for data_list in [i for i in csv.reader(file)][1:]:
                 if round(float(data_list[1])) != 0:
                     y.append(round(float(data_list[1])))
             print('最大值：{}'.format(max(y)))

@@ -51,7 +51,7 @@ def is_exist(path):
     return True
 
 
-def changeFile():
+def main():
     try:
         now_time = time.strftime('%Y%m%d%H', time.localtime(time.time()))
         print('当前执行时间: {} \n'.format(now_time))
@@ -61,7 +61,7 @@ def changeFile():
         perf_data_path = file_name
         if not os.path.exists(data_path):
             os.mkdir(data_path)
-            path_list = ['/MEM', '/CPU', '/FPS']
+            path_list = ['/MEM', '/CPU', '/FPS', '/TEMP']
             for i in path_list:
                 if not os.path.exists(data_path + i):
                     os.mkdir(data_path + i)
@@ -85,6 +85,10 @@ def changeFile():
             elif file_dir.startswith('应用进程-main'):
                 shutil.move(os.path.join(re_data_path, file_dir), data_path + '/CPU' + '/CPU_{}.csv'.format(now))
                 print('CPU 执行成功')
+
+            elif file_dir.startswith('CPU温度_Temperature'):
+                shutil.move(os.path.join(re_data_path, file_dir), data_path + '/TEMP' + '/TEMP_{}.csv'.format(now))
+                print('温度 执行成功')
             else:
                 pass
 
@@ -98,4 +102,4 @@ def changeFile():
 
 
 if __name__ == '__main__':
-    changeFile()
+    main()
