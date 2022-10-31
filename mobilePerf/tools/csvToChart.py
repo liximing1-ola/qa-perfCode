@@ -1,8 +1,7 @@
 import csv
-import os  # for in mac
 import platform
 from matplotlib.pylab import *
-
+import os
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 data_path = BASE_PATH + '/report'
 
@@ -85,6 +84,8 @@ def csvToList(csv_path, perf):
             for data_list in [i for i in csv.reader(file)][1:]:
                 if round(float(data_list[1])) != 0 and round(float(data_list[1])) <= 100:  # 顶层activity所在进程的CPU占用百分比
                     y.append(round(float(data_list[1])))
+            y.remove(max(y))
+            y.remove(min(y))
             print('最大值：{}'.format(max(y)))
             print('均值：{}'.format(sum(y) / len(y)))
             del y[1::2]

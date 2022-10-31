@@ -13,7 +13,7 @@ def lsPhoneFile():
     command = 'adb shell ls /storage/emulated/0/solopi/records/'  # solopi 地址路径
     file_list = []
     use_file = []
-    if not is_exist(command):
+    if not is_exist(command+solopi_path):
         print('请检查设备USB链接 or 确保数据输出到指定文件夹\n')
         exit(1)
     res = subprocess.Popen(command + solopi_path,
