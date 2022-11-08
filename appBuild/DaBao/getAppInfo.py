@@ -1,9 +1,9 @@
-import os,re
+import os
+import re
 import sys
 #  检查apk版本号等信息
 def getAppBaseInfo():
-    # aapt_path = 'D:/android-sdk-windows/build-tools/28.0.3/aapt.exe'
-    aapt_path = 'D:\AndroidSDK/build-tools/28.0.3/aapt.exe'
+    aapt_path = 'D:\AndroidSDK/build-tools/28.0.3/aapt.exe'  # aapt.exe路径
     apk_path = sys.argv[1]
     get_info_command = "{} dump badging {}".format(aapt_path, apk_path)
     output = os.popen(get_info_command)  # 执行命令，并将结果以字符串方式返回

@@ -7,6 +7,7 @@ BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 data_path = BASE_PATH + '/report'
 re_data_path = data_path + '/prefData'
 solopi_path = 'records/records/records'  # 自己通过solopi的路径设置
+path_list = ['/MEM', '/CPU', '/FPS', '/TEMP']
 
 
 def lsPhoneFile():
@@ -61,7 +62,6 @@ def main():
         perf_data_path = file_name
         if not os.path.exists(data_path):
             os.mkdir(data_path)
-            path_list = ['/MEM', '/CPU', '/FPS', '/TEMP']
             for i in path_list:
                 if not os.path.exists(data_path + i):
                     os.mkdir(data_path + i)
@@ -88,7 +88,7 @@ def main():
 
             elif file_dir.startswith('CPU温度_Temperature'):
                 shutil.move(os.path.join(re_data_path, file_dir), data_path + '/TEMP' + '/TEMP_{}.csv'.format(now))
-                print('温度 执行成功')
+                print('TEMP 执行成功')
             else:
                 pass
 
