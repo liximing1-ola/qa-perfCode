@@ -4,3 +4,4 @@ python $basedir/tools/changeFile.py
 python $basedir/tools/csvToChart.py cpu
 python $basedir/tools/csvToChart.py fps
 python $basedir/tools/csvToChart.py mem
+python $basedir/tools/csvToChart.py temp
