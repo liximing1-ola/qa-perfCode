@@ -3,6 +3,7 @@ import os
 import time
 from nt import chdir
 
+now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
 if len(sys.argv) != 5:
     print('-----------INPUT[apkPath][apkName][appVersion][CPU]-----------')
     quit(0)
@@ -10,13 +11,12 @@ apk_file_name = sys.argv[1]
 app_name = sys.argv[2]
 app_version = sys.argv[3]
 app_so = sys.argv[4]
+output_path = 'D:/Build/{}_{}_{}_{}'.format(app_name, app_version, app_so, now)
 
 
 # 出主渠道包
 def process_one_conf(channel_list):
-    now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
     # 本地路径
-    output_path = 'D:/Build/{}_{}_{}_{}'.format(app_name, app_version, app_so, now)
     if os.path.exists(output_path):
         print('existed')
     else:
