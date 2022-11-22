@@ -1,5 +1,7 @@
 import sys
 import os
+
+
 def unZip():
     try:
         choose = int(input('please choose 1=UnZip[1], 2=Zip[2]: '))
@@ -21,6 +23,3 @@ def unZip():
 
 if __name__ == '__main__':
     unZip()
-
-
-

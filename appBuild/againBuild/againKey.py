@@ -1,6 +1,7 @@
 import os
 import sys
 
+
 def reSign():
     if len(sys.argv) != 3:
         print('--------Please Input Two Path--------')
@@ -8,10 +9,10 @@ def reSign():
     # 本机配置环境路径
     # 华为空包限制用D:\android-sdk-windows\build-tools\27.0.3
     # apksigner路径
-    sdk_path = 'D:\AndroidSDK/build-tools/28.0.3/apksigner.bat'
+    sdk_path = 'D:/build-tools/33.0.0/apksigner.bat'
     # sdk_path = 'D:\AndroidSDK/build-tools/27.0.3/apksigner.bat'
     # keystore路径
-    keystore_path = 'E:/keystore/my-release-key.keystore'
+    keystore_path = 'D:/keystore/my-release-key.keystore'
     # password
     keystore_pass = 'imee2016'
     # 7日情侣

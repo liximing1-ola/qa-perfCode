@@ -19,6 +19,7 @@
 import sys
 import os
 
+
 def process_one_conf(working_dir):
     # show channel
     if len(sys.argv) == 3:
@@ -38,7 +39,6 @@ def process_one_conf(working_dir):
     if has_seq:
         start_channel_seq = int(sys.argv[3])
         end_channel_seq = int(sys.argv[4])
-
 
     # get single channel name or batch channel names if with start and end seq arguments
     channel_names = []
@@ -62,7 +62,6 @@ def process_one_conf(working_dir):
         cmd = 'java -jar walle-cli-all.jar batch -c ' + channel_names_str + ' ' + apk_file_name
         # print('cmd is:\n' + cmd)
         os.system(cmd)
-
 
         # rename apk files
         apk_name = apk_file_name[:-4]
@@ -97,4 +96,3 @@ if __name__ == '__main__':
                 process_one_conf(working_dir)
     else:
         process_one_conf(working_dir)
-
