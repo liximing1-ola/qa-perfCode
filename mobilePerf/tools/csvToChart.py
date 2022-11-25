@@ -77,7 +77,7 @@ def csvToList(csv_path, perf):
                 if round(float(data_list[1])) != 0 and round(
                         float(data_list[1])) <= 90:  # 根据设备gfxinfo信息计算1s内超时帧时间，反推出实际帧率，根据实际设备修改阈值,flutter目前60
                     y.append(round(float(data_list[1])))
-            del y[1::2]  # 隔一个取一个值，影响不大
+            del y[1::2]  # 隔一个取一个值
             return y
     elif perf == 'CPU':
         with open(csv_path, 'r+', encoding='gbk') as file:
@@ -86,8 +86,9 @@ def csvToList(csv_path, perf):
                     y.append(round(float(data_list[1])))
             y.remove(max(y))
             y.remove(min(y))
+            print('最低值：{}'.format(min(y)))
             print('最大值：{}'.format(max(y)))
-            print('均值：{}'.format(sum(y) / len(y)))
+            print('均值：{}'.format(int(sum(y) / len(y))))
             del y[1::2]
             return y
     elif perf == 'MEM':
@@ -95,8 +96,9 @@ def csvToList(csv_path, perf):
             for data_list in [i for i in csv.reader(file)][1:]:  # 顶层activity所在进程的PSS（实际使用内存）
                 if round(float(data_list[1])) != 0:
                     y.append(round(float(data_list[1])))
+            print('最低值：{}'.format(min(y)))
             print('最大值：{}'.format(max(y)))
-            print('均值：{}'.format(sum(y)/len(y)))
+            print('均值：{}'.format(int(sum(y)/len(y))))
             del y[1::2]
             return y
     elif perf == 'TEMP':
@@ -104,8 +106,9 @@ def csvToList(csv_path, perf):
             for data_list in [i for i in csv.reader(file)][1:]:
                 if round(float(data_list[1])) != 0:
                     y.append(round(float(data_list[1])))
+            print('最低值：{}'.format(min(y)))
             print('最大值：{}'.format(max(y)))
-            print('均值：{}'.format(sum(y)/len(y)))
+            print('均值：{}'.format(int(sum(y)/len(y))))
             del y[1::2]
             return y
     else:

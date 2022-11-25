@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 
+
 def changeRes():
     if len(sys.argv) != 3:
         print('--------Please Input Two Path--------')
@@ -48,7 +49,7 @@ def changeRes():
         new_res_path_144: res_path_xxhdpi_144,
         new_res_path_192: res_path_xxxhdpi_192,
         new_res_path_1080: res_path_xxhdpi_splash,
-                     }
+    }
 
     for k, v in res_path_list.items():
         if not os.path.exists(k):
@@ -60,7 +61,7 @@ def changeRes():
         shutil.copy(new_res_path_72, res_path_hdpi_72)
         shutil.move(res_path_hdpi_72 + '/72.png', res_path_hdpi_72 + '/ic_launcher.png')
     except Exception as error:
-            print(error)
+        print(error)
     else:
         print('mipmap-hdpi: 72px  资源更换成功')
 
@@ -95,7 +96,6 @@ def changeRes():
         print(error)
     else:
         print('mipmap-xxhdpi: 1080px  资源更换成功')
-
 
     if not os.path.exists(res_path_drawable_512):
         print('res_path_drawable_512 地址错误！')
@@ -162,8 +162,8 @@ def changeRes():
 
 
 def checkIconPath(p_path):
-    p_list=['72.png', '96.png', '144.png', '192.png', '432.png', '512.png', '1080.png', '1080.webp', 'login_btn.png',
-            'logo.png']
+    p_list = ['72.png', '96.png', '144.png', '192.png', '432.png', '512.png', '1080.png', '1080.webp', 'login_btn.png',
+              'logo.png']
     for p in os.listdir(p_path):
         if p not in p_list:
             raise EnvironmentError('{}--名称错误'.format(p))
