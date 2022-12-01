@@ -63,8 +63,9 @@ if __name__ == '__main__':
     testTime = testColdTime(device=testColdTime.getDev(), pg_name=pn, pga_name=an)
     time_list = testTime.startUpTime()
     print(time_list)
-    total_time = 0
-    for i in time_list:
-        total_time += i
-    avg_time = int(total_time / len(time_list))
-    print('冷启动平均耗时： {}ms'.format(avg_time))
+    print('去掉最高值：{}'.format(max(time_list)))
+    print('去掉最低值：{}'.format(min(time_list)))
+    time_list.remove(max(time_list))
+    time_list.remove(min(time_list))
+    avg_time = int(sum(time_list) / len(time_list))
+    print('冷启动平均耗时: {}ms'.format(avg_time))
