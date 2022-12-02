@@ -3,6 +3,7 @@ import re
 import time
 import random
 
+
 def getPackageName():
     """
     :return: 获得包名
@@ -27,6 +28,7 @@ def getPackageName():
     except Exception as error:
         print(error)
 
+
 def getDev():
     """
     :return: 获得设备id
@@ -41,9 +43,10 @@ def getDev():
     except Exception as error:
         print(error)
 
+
 def Fps():
     print('当前设备id: {}'.format(getDev()))
-    i=1
+    i = 1
     while i <= 2000:
         r = random.randint(1, 2)
         if r == 1:
