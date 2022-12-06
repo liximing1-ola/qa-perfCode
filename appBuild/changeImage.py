@@ -17,15 +17,19 @@ def imageChange():
         os.mkdir(out_path)
 
     file_list = os.listdir(image_path)
-    print(len(file_list))
+    input_data = len(file_list)
+    print(input_data)
     for file in file_list:
         if file.endswith('.png') or file.endswith('.jpg'):
             image_i = Image.open(os.path.join(image_path, file))
             image_gray = image_i.convert('L')
-            print('{}-gray success'.format(file))
+            print('{} -- success'.format(file))
             image_gray.save(os.path.join(out_path, file), quality=95)  # subsampling=0
 
-    print(len(os.listdir(out_path)))
+    out_data = len(os.listdir(out_path))
+    print(out_data)
+    if int(input_data) == int(out_data):
+        print('gray all success')
 
 
 if __name__ == '__main__':

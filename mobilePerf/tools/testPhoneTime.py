@@ -109,5 +109,5 @@ class testPhoneTime:
 
 
 if __name__ == '__main__':
-    testPhoneTime.main('cold')
-    testPhoneTime.main('hot')
+    testPhoneTime.main('cold')  # 冷启动
+    testPhoneTime.main('hot')  # 热启动
