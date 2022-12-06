@@ -9,7 +9,7 @@ def reSign():
     # 本机配置环境路径
     # 华为空包限制用D:\android-sdk-windows\build-tools\27.0.3
     # apksigner路径
-    sdk_path = 'D:/build-tools/33.0.0/apksigner.bat'
+    sdk_path = 'D:/build-tools/build-tools/29.0.2/apksigner.bat'
     # sdk_path = 'D:\AndroidSDK/build-tools/27.0.3/apksigner.bat'
     # keystore路径
     keystore_path = 'D:/keystore/my-release-key.keystore'
@@ -22,7 +22,6 @@ def reSign():
     apk_path = sys.argv[1]
     # 重签包路径
     out_path = sys.argv[2]
-    # shell
     cmd = sdk_path + ' sign --ks ' + keystore_path + ' --ks-pass pass:' + keystore_pass + ' --out ' + out_path + ' ' + apk_path
     os.system(cmd)
 
