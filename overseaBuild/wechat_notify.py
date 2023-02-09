@@ -132,7 +132,7 @@ else:
     print(response.text)
 
     if buildType == 'debug' or buildType == 'release':
-        if (len(sys.argv) > 2 and len(sys.argv[2]) > 0):
+        if len(sys.argv) > 2 and len(sys.argv[2]) > 0:
             changeLog = "" + sys.argv[2]
         # max-length of wecom msg contenxt is 2048
         msg = (changeLog[:2000] + '..') if len(changeLog) > 2000 else changeLog

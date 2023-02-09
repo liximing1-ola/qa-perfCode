@@ -8,10 +8,10 @@ ciNum=$6
 
 projectPath=$(dirname "$PWD")
 
-if [ $buildType == "debug" ]; then
+if [ "$buildType" == "debug" ]; then
     apkPath="$projectPath/build/app/outputs/apk/banban_locale/profile/app-banban_locale-profile.apk"
     if [ -d "$projectPath/build/app/outputs" ]; then
-        rm -rf $projectPath/build/app/outputs
+        rm -rf "$projectPath"/build/app/outputs
     fi
     cur_timestamp=$(date +%s)
     flutter build apk --profile --build-number $versionCode --build-name $versionName --flavor banban_locale --dart-define=BUILD_TIME="$cur_timestamp" --dart-define=DEBUG_MODE=true --dart-define=CI_NUM="$ciNum" --target-platform=android-arm64 -v
@@ -37,6 +37,7 @@ elif [ $buildType == "release" ]; then
     fi
     mv $apkPath $projectPath/build/app/outputs/apk/partying_${buildType}_${ciNum}.apk
 elif [ $buildType == "store" ]; then
+    # shellcheck disable=SC2164
     cd $projectPath
     
     flutter clean
@@ -50,7 +51,9 @@ elif [ $buildType == "store" ]; then
     package="com.imbb.oversea.android"
     uploadPath="$projectPath/build/app/outputs/bundle/partying_$versionName.aab"
 
+    # shellcheck disable=SC2164
     cd $projectPath/ci/upload_gp
     python3 upload_apks_with_listing.py $package $uploadPath $versionName "$releaseNotes"
+    # shellcheck disable=SC2164
     cd $projectPath
 fi

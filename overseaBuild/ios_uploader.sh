@@ -6,13 +6,14 @@ apiIssuer="5d0506b3-c4f1-4ce3-b34e-845de814f1ef"
 
 function upload_ipa() {
     local ipa_file=${1}
-    if [ ! -f $ipa ];then
+    # shellcheck disable=SC2154
+    if [ ! -f "$ipa" ];then
         echo -e "033[31m file $ipa_file not exists \033[0m"
         return 
     fi
 
     upload="xcrun altool --upload-app -f $ipa_file -t iOS --apiKey $apiKey --apiIssuer $apiIssuer --verbose"
-    echo "running upload cmd" $upload
+    echo "running upload cmd" "$upload"
     uploadApp="$($upload)"
     echo uploadApp
     if [ -z "$uploadApp" ]; then
@@ -24,14 +25,14 @@ function upload_ipa() {
 
 function validate_and_upload(){
     local ipa_file=${1}
-    if [ ! -f $ipa ];then
+    if [ ! -f "$ipa" ];then
         echo -e "033[31m file $ipa_file not exists \033[0m" 
         return 
     fi
 
 
     validate="xcrun altool --validate-app -f $ipa_file -t iOS --apiKey $apiKey --apiIssuer $apiIssuer --verbose"
-    echo "running validate cmd" $validate
+    echo "running validate cmd" "$validate"
 
     runValidate="$($validate)"
     echo "$runValidate"

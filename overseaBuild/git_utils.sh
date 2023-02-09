@@ -5,9 +5,11 @@ function branch_is_in_local() {
     local git_dir='./.git/'
     
     # if $2 is set, git_dir=$2
-    [ -z ${2} ] || git_dir=${2}
+    [ -z "${2}" ] || git_dir=${2}
 
-    local existed_in_local=`git --git-dir ${git_dir} branch --list ${branch}`
+    # shellcheck disable=SC2155
+    # shellcheck disable=SC2006
+    local existed_in_local=`git --git-dir "${git_dir}" branch --list "${branch}"`
     if [[ -z ${existed_in_local} ]]; then
         echo 0
     else

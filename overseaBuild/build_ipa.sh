@@ -6,35 +6,37 @@ buildType=$1
 versionName=$2
 versionCode=$3
 debugModel=$4
+# shellcheck disable=SC2034
 releaseNotes=$5
 ciNum=$6
 
 projectPath=$(dirname "$PWD")
 
 function buildStore() {
-    cd $projectPath
+    cd "$projectPath"
     flutter clean
     flutter pub get
     cd ios
     arch -x86_64 pod install --repo-update
     ipaPath=$projectPath/build/ios/ipa/Partying.ipa
     
-    flutter build ipa --release --build-number $versionCode --build-name $versionName --export-options-plist=ios/ExportOptions.plist
+    flutter build ipa --release --build-number "$versionCode" --build-name "$versionName" --export-options-plist=ios/ExportOptions.plist
 
-    cd $projectPath/ci
-    upload_ipa $ipaPath
+    cd "$projectPath"/ci
+    upload_ipa "$ipaPath"
 
     # upload dSYM
     uploadymbolsPath=$projectPath/ios/Pods/FirebaseCrashlytics/upload-symbols
     plistPath=$projectPath/ios/Runner/GoogleService-Info.plist
     dsymPath=$projectPath/build/ios/archive/Runner.xcarchive/dSYMs/Runner.app.dSYM
     if [ -f "$dsymPath" ];then
-      $uploadymbolsPath -gsp $plistPath -p ios $dsymPath
+      $uploadymbolsPath -gsp "$plistPath" -p ios "$dsymPath"
     fi
 }
 
-cd $projectPath
+cd "$projectPath"
 
+# shellcheck disable=SC2086
 if [ $buildType == "debug" ]; then
     ipaPath="$projectPath/build/ios/ipa/Partying.ipa"
     if [ -d "$projectPath/build/ios" ]; then
