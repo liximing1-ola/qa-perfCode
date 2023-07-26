@@ -11,13 +11,17 @@ def reSign():
     # apksigner路径
     sdk_path = 'D:/build-tools/build-tools/29.0.2/apksigner.bat'
     # sdk_path = 'D:\AndroidSDK/build-tools/27.0.3/apksigner.bat'
-    # keystore路径
-    keystore_path = 'D:/keystore/my-release-key.keystore'
+
+    # 老项目keystore路径
+    # keystore_path = 'D:/keystore/my-release-key.keystore'
     # password
-    keystore_pass = 'imee2016'
-    # 7日情侣
-    # keystore_path = 'E:/keystore/lovers.keystore'
-    # keystore_pass = 'lovers_7day'
+    # keystore_pass = 'imee2016'
+    # 不夜星球
+    # keystore_path = 'D:\keystore\slp.keystore'
+    # keystore_pass = 'PLS_699'
+    # 彩虹星球
+    keystore_path = 'D:\keystore/rbp.keystore'
+    keystore_pass = '634rbp'
     # 加固包路径
     apk_path = sys.argv[1]
     # 重签包路径

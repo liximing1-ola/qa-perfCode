@@ -14,7 +14,7 @@ def changeRes():
     # 解压包res下路径
     pkg_res_path = res_path + '/res'
     # 解压包下assets下路径
-    base_logo_path = res_path + '/assets/flutter_assets/assets/module/banban_base'
+    base_logo_path = res_path + '/assets/flutter_assets/assets/module/bbcore'
     # 一键登录webp路径
     base_webp_path = res_path + '/assets/flutter_assets/assets\module\login'
 
