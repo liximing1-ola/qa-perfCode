@@ -10,7 +10,7 @@ def csvToChart(platforms):
     csv_path = ''
     y_name = ' '
     perf = ''
-    if platforms == 'win':
+    if platforms == 'win':  # windows设备
         print('platform=Windows\n')
         if len(sys.argv) == 3:
             csv_path = sys.argv[1]
@@ -19,10 +19,10 @@ def csvToChart(platforms):
             perf = sys.argv[1].upper()
             for i, j, csv_path in os.walk(data_path + '/{}'.format(perf)):
                 if len(csv_path) == 0:
-                    print('未生成有效数据')
+                    print('invalid data')
                     exit(1)
             csv_path = data_path + '/{}/{}'.format(perf, csv_path[-1])  # 默认时间倒序最后一个csv文件，根据需要修改
-    elif platforms == 'mac':
+    elif platforms == 'mac':  # iOS设备
         print('platform=Mac\n')
         if len(sys.argv) != 2:
             print('mac need input one key, eg（cpu, mem, fps）')
@@ -30,7 +30,7 @@ def csvToChart(platforms):
         perf = sys.argv[1].upper()
         for i, j, csv_path in os.walk(data_path + '/{}'.format(perf)):
             if len(csv_path) == 0:
-                print('未生成有效数据')
+                print('')
                 exit(1)
             csv_path = data_path + '/{}/{}'.format(perf, csv_path[-1])  # 默认时间倒序最后一个csv文件，根据需要修改
 
@@ -45,7 +45,7 @@ def csvToChart(platforms):
     plt.rcParams['savefig.dpi'] = 200
     plt.rcParams['figure.dpi'] = 100
 
-    title_show = 'Banban_{}_Analysis'.format(perf)  # 根据APP调整展示title
+    title_show = 'APP_{}_Analysis'.format(perf)  # 根据APP调整展示title
     if perf == 'FPS':
         y_name = 'FPS(gfxinfo)'
     elif perf == 'CPU':
@@ -75,9 +75,10 @@ def csvToList(csv_path, perf):
         with open(csv_path, 'r+', encoding='gbk') as file:
             for data_list in [i for i in csv.reader(file)][1:]:
                 if round(float(data_list[1])) != 0 and round(
-                        float(data_list[1])) <= 90:  # 根据设备gfxinfo信息计算1s内超时帧时间，反推出实际帧率，根据实际设备修改阈值,flutter目前60
+                        float(data_list[1])) <= 90:
+                    # 根据gfxinfo信息计算1s内超时帧时间，计算出实际帧率（根据设备情况修改阈值，flutter=60）
                     y.append(round(float(data_list[1])))
-            del y[1::2]  # 隔一个取一个值
+            del y[1::2]
             return y
     elif perf == 'CPU':
         with open(csv_path, 'r+', encoding='gbk') as file:
@@ -86,9 +87,9 @@ def csvToList(csv_path, perf):
                     y.append(round(float(data_list[1])))
             y.remove(max(y))
             y.remove(min(y))
-            print('最低值：{}'.format(min(y)))
-            print('最大值：{}'.format(max(y)))
-            print('均值：{}'.format(int(sum(y) / len(y))))
+            print('max：{}'.format(min(y)))
+            print('min：{}'.format(max(y)))
+            print('av：{}'.format(int(sum(y) / len(y))))
             del y[1::2]
             return y
     elif perf == 'MEM':
@@ -96,9 +97,9 @@ def csvToList(csv_path, perf):
             for data_list in [i for i in csv.reader(file)][1:]:  # 顶层activity所在进程的PSS（实际使用内存）
                 if round(float(data_list[1])) != 0:
                     y.append(round(float(data_list[1])))
-            print('最低值：{}'.format(min(y)))
-            print('最大值：{}'.format(max(y)))
-            print('均值：{}'.format(int(sum(y)/len(y))))
+            print('min：{}'.format(min(y)))
+            print('max：{}'.format(max(y)))
+            print('av：{}'.format(int(sum(y)/len(y))))
             del y[1::2]
             return y
     elif perf == 'TEMP':
@@ -106,9 +107,9 @@ def csvToList(csv_path, perf):
             for data_list in [i for i in csv.reader(file)][1:]:
                 if round(float(data_list[1])) != 0:
                     y.append(round(float(data_list[1])))
-            print('最低值：{}'.format(min(y)))
-            print('最大值：{}'.format(max(y)))
-            print('均值：{}'.format(int(sum(y)/len(y))))
+            print('min：{}'.format(min(y)))
+            print('max：{}'.format(max(y)))
+            print('av：{}'.format(int(sum(y)/len(y))))
             del y[1::2]
             return y
     else:
@@ -116,7 +117,7 @@ def csvToList(csv_path, perf):
 
 
 if __name__ == '__main__':
-    if platform.system() == 'Windows':
+    if platform.system() == 'Windows':  # win设备
         csvToChart('win')
-    elif platform.system() == 'Darwin':
+    elif platform.system() == 'Darwin':  # ios 设备
         csvToChart('mac')

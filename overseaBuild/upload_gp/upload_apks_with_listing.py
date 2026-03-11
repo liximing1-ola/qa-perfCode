@@ -52,24 +52,24 @@ mimetypes.add_type("application/octet-stream", ".aab")
 TRACK = 'production'  # Can be 'alpha', beta', 'production' or 'rollout'
 
 releaseNotes = [
-  {'language':'en-SG','text':''''''},
-  {'language':'en-AU','text':''''''},
-  {'language':'en-CA','text':''''''},
-  {'language':'en-GB','text':''''''},
-  {'language':'en-IN','text':''''''},
-  {'language':'en-US','text':''''''},
-  {'language':'en-ZA','text':''''''},
-  {'language':'ar','text':''''''},
-  {'language':'id','text':''''''},
-  {'language':'ko-KR','text':''''''},
-  {'language':'ms','text':''''''},
-  {'language':'ms-MY','text':''''''},
-  {'language':'th','text':''''''},
-  {'language':'tr-TR','text':''''''},
-  {'language':'vi','text':''''''},
-  {'language':'zh-TW','text':''''''},
-  {'language':'zh-CN','text':''''''},
-  {'language':'zh-HK','text':''''''}
+  {'language': 'en-SG', 'text':''''''},
+  {'language': 'en-AU', 'text':''''''},
+  {'language': 'en-CA', 'text':''''''},
+  {'language': 'en-GB', 'text':''''''},
+  {'language': 'en-IN', 'text':''''''},
+  {'language': 'en-US', 'text':''''''},
+  {'language': 'en-ZA', 'text':''''''},
+  {'language': 'ar', 'text':''''''},
+  {'language': 'id','text':''''''},
+  {'language': 'ko-KR','text':''''''},
+  {'language': 'ms','text':''''''},
+  {'language': 'ms-MY','text':''''''},
+  {'language': 'th','text':''''''},
+  {'language': 'tr-TR','text':''''''},
+  {'language': 'vi','text':''''''},
+  {'language': 'zh-TW','text':''''''},
+  {'language': 'zh-CN','text':''''''},
+  {'language': 'zh-HK','text':''''''}
 ]
 
 # Declare command-line flags.
@@ -98,8 +98,6 @@ def main(argv):
   http = credentials.authorize(http)
 
   service = build('androidpublisher', 'v3', http=http)
-
-  # Process flags and read their values.
   flags = argparser.parse_args()
   package_name = flags.package_name
   apk_file = flags.apk_file

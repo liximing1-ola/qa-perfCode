@@ -5,7 +5,7 @@ import sys
 
 def changeRes():
     if len(sys.argv) != 3:
-        print('--------Please Input Two Path--------')
+        print('--------please input two path--------')
         exit(0)
     # 解压包路径
     res_path = sys.argv[1]
@@ -15,9 +15,9 @@ def changeRes():
     pkg_res_path = res_path + '/res'
     # 解压包下assets下路径
     base_logo_path = res_path + '/assets/flutter_assets/assets/module/bbcore'
-    # 一键登录webp路径
+    # 一键登录地址
     base_webp_path = res_path + '/assets/flutter_assets/assets\module\login'
-
+    # 检查图片地址
     checkIconPath(res_name_path)
     # 替换资源
     new_res_path_72 = res_name_path + '/72.png'
@@ -53,9 +53,9 @@ def changeRes():
 
     for k, v in res_path_list.items():
         if not os.path.exists(k):
-            print('需更换资源包地址错误！')
+            print('path error！')
         if not os.path.exists(v):
-            print('地址错误！')
+            print('path error！')
 
     try:
         shutil.copy(new_res_path_72, res_path_hdpi_72)
@@ -63,7 +63,7 @@ def changeRes():
     except Exception as error:
         print(error)
     else:
-        print('mipmap-hdpi: 72px  资源更换成功')
+        print('mipmap-hdpi: 72px  success')
 
     try:
         shutil.copy(new_res_path_96, res_path_xhdpi_96)
@@ -71,7 +71,7 @@ def changeRes():
     except Exception as error:
         print(error)
     else:
-        print('mipmap-xhdpi: 96px  资源更换成功')
+        print('mipmap-xhdpi: 96px success')
 
     try:
         shutil.copy(new_res_path_144, res_path_xxhdpi_144)
@@ -79,7 +79,7 @@ def changeRes():
     except Exception as error:
         print(error)
     else:
-        print('mipmap-xxhdpi: 144px  资源更换成功')
+        print('mipmap-xxhdpi: 144px success')
 
     try:
         shutil.copy(new_res_path_192, res_path_xxxhdpi_192)
@@ -87,7 +87,7 @@ def changeRes():
     except Exception as error:
         print(error)
     else:
-        print('mipmap-xxxhdpi: 192px  资源更换成功')
+        print('mipmap-xxxhdpi: 192px success')
 
     try:
         shutil.copy(new_res_path_1080, res_path_xxhdpi_splash)
@@ -95,27 +95,27 @@ def changeRes():
     except Exception as error:
         print(error)
     else:
-        print('mipmap-xxhdpi: 1080px  资源更换成功')
+        print('mipmap-xxhdpi: 1080px  success')
 
     if not os.path.exists(res_path_drawable_512):
-        print('res_path_drawable_512 地址错误！')
+        print('res_path_drawable_512 path error！')
     try:
         shutil.copy(new_res_path_512, res_path_drawable_512)
         shutil.move(res_path_drawable_512 + '/512.png', res_path_drawable_512 + '/ic_launcher.png')
     except Exception as error:
         print(error)
     else:
-        print('drawable: 512px  资源更换成功')
+        print('drawable: 512px success')
 
     if not os.path.exists(base_logo_path):
-        print('base_logo_path 地址错误！')
+        print('base_logo_path path error！')
     try:
         shutil.copy(new_res_path_144, base_logo_path)
         shutil.move(base_logo_path + '/144.png', base_logo_path + '/logo.png')
     except Exception as error:
         print(error)
     else:
-        print('banban_base: 144px  资源更换成功')
+        print('banban_base: 144px success')
 
     # 11.1新增处理ic_launcher_foreground.png
     try:
@@ -124,7 +124,7 @@ def changeRes():
     except Exception as error:
         print(error)
     else:
-        print('drawable ic_launcher_foreground: 432px  资源更换成功')
+        print('drawable ic_launcher_foreground: 432px success')
 
     # 2020-7.22新增处理ic_launcher_foreground.png放在mipmap-xxxhdpi中
     try:
@@ -133,7 +133,7 @@ def changeRes():
     except Exception as error:
         print(error)
     else:
-        print('xxxhdpi ic_launcher_foreground: 432px  资源更换成功')
+        print('xxxhdpi ic_launcher_foreground: 432px success')
 
     # 2020-7.23 新增处理一键登录默认icon
     try:
@@ -142,7 +142,7 @@ def changeRes():
     except Exception as error:
         print(error)
     else:
-        print('一键登录:1080.webp 资源更换成功')
+        print('一键登录:1080.webp success')
 
     try:
         shutil.copy(new_res_path_logo, res_path_drawable_512)
@@ -150,7 +150,7 @@ def changeRes():
     except Exception as error:
         print(error)
     else:
-        print('一键登录:logo.png 资源更换成功')
+        print('一键登录:logo.png success')
 
     try:
         shutil.copy(new_res_path_login_btn, res_path_drawable_512)
@@ -158,7 +158,7 @@ def changeRes():
     except Exception as error:
         print(error)
     else:
-        print('一键登录:login_btn.png 资源更换成功')
+        print('一键登录:login_btn.png success')
 
 
 def checkIconPath(p_path):
@@ -166,9 +166,9 @@ def checkIconPath(p_path):
               'logo.png']
     for p in os.listdir(p_path):
         if p not in p_list:
-            raise EnvironmentError('{}--名称错误'.format(p))
+            raise EnvironmentError('{}--name is wrong'.format(p))
         elif len(os.listdir(p_path)) != 10:
-            raise EnvironmentError('资源不足')
+            raise EnvironmentError('env error')
     return True
 
 

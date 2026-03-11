@@ -46,14 +46,13 @@ def change_name(path):
 
 def appBuild():
     if app_name.startswith('slp'):
-        channel = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi']
+        channel = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb', 'baidu']
         process_one_conf(channel)
     elif app_name.startswith('rbp'):
-        channel = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb', 'meizu', 'tt']
+        channel = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb']
         process_one_conf(channel)
     else:
-        channel_names = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb', 'meizu', 'pp', 'qihu', 'anzhi', 'baidu',
-                         'sanxing', 'lxlsd', 'sougou', 'yybcpd1']
+        channel_names = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb', 'rongyao']
         process_one_conf(channel_names)
 
 

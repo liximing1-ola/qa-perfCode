@@ -65,9 +65,9 @@ class PckCpuInfo(object):
                 if package in line:  # 解析进程cpu信息
                     tmp = line.split()
                     self.pid = tmp[0]
-                    target_pck = tmp[-1]  # 从中解析出的最后一个值是包名
+                    target_pck = tmp[-1]  # 解析包名
                     self.datetime = TimeUtils.getCurrentTime()
-                    if package == target_pck:  # 只统计包名完全相同的进程
+                    if package == target_pck:  # 只统计包名一致的Process
                         if int(self.pid) > 0:
                             logger.debug(
                                 "cpuinfos, into _parse_pck packege is target package, pid is :" + str(self.pid))
@@ -93,7 +93,7 @@ class PckCpuInfo(object):
         从top中解析出cpu的信息
         :return:
         """
-        if self.sdkVersion < 26:  # android 8.0之前的版本
+        if self.sdkVersion < 26:  # 版本判断，处理Android8以上版本
             match = self.RE_CPU.search(self.source)
             if match:
                 self.user_rate = match.group(1)
@@ -104,7 +104,7 @@ class PckCpuInfo(object):
                 logger.debug(" cpuinfos, device system_rate: %s" % self.system_rate)
                 logger.debug(" cpuinfos, device user_rate: %s" % self.user_rate)
                 logger.debug(" cpuinfos, device device_cpu_rate: %s" % self.device_cpu_rate)
-        else:  # 8.0及其以上的版本
+        else:  # android8以上版本
             #  1:cpu 2:user 3:nice 4:sys 5:idle 6:iow 7:irq 8:sirq 9:host
             match = self.RE_CPU_O.search(self.source)
             if match:
@@ -115,19 +115,19 @@ class PckCpuInfo(object):
                 self.iow_rate = match.group(6)
                 self.irq_rate = match.group(7)
                 self.device_cpu_rate = int(self.user_rate) + int(self.system_rate)
-                logger.debug("8.0 or higher, user_rate: " + str(self.user_rate) + ", sys: " + str(
+                logger.debug("android8.0 or higher, user_rate: " + str(self.user_rate) + ", sys: " + str(
                     self.system_rate) + ",device cpu: " + str(self.device_cpu_rate))
                 logger.debug("idle_rate: %s" % self.idle_rate)
 
     def sum_procs_cpurate(self):
         """
-        :return: 所有这些进程cpu%的和
+        :return: 所有进程cpu%之和
         """
         summ = 0
         if self.source:
             sp_lines = self.source.split("\n")
             for line in sp_lines:
-                if self.uid != "" and self.uid in line:  # 先过滤出有相同uid的行
+                if self.uid != "" and self.uid in line:  # 过滤 uid
                     tmp = line.split()
                     cpu_index = self.get_cpucol_index()
                     summ += int(tmp[cpu_index].replace("%", ""))
@@ -325,7 +325,7 @@ class CpuCollector(object):
                                               cpu_info.package_list[i]["pid_cpu"]])
                 if len(self.packages) > 1:
                     self.cpu_list.append(cpu_info.total_pid_cpu)
-                #  校准时间，由于top执行需要耗时，需要将这个损耗加上去
+                #  去掉top命令耗时时间，
                 logger.info("INFO: CpuMonitor save cpu_device_list: " + str(self.cpu_list))
                 try:
                     with open(cpu_file, 'a+', encoding="utf-8") as df:
@@ -341,7 +341,7 @@ class CpuCollector(object):
                 logger.error("an exception hanpend in cpu thread , reason unkown!, e:")
                 logger.error(e)
                 s = traceback.format_exc()
-                logger.debug(s)  # 将堆栈信息打印到log中
+                logger.debug(s)  # 打印log日志记录debug
                 if self.cpu_queue:
                     self.cpu_queue.task_done()
         logger.debug("stop event is set or timeout")
@@ -359,7 +359,7 @@ class CpuMonitor(object):
 
     def start(self, start_time):
         """
-        启动一个cpu监控器，监控cpu信息
+        启动CPU监控器，收集cpu数据信息
         :return:
         """
         if not RuntimeData.package_save_path:
@@ -369,7 +369,7 @@ class CpuMonitor(object):
                 os.makedirs(RuntimeData.package_save_path)
         self.start_time = start_time
         self.cpu_collector.start(start_time)
-        logger.debug("INFO: CpuMonitor has started...")
+        logger.debug("INFO: CpuMonitor has started...") # cpu，om
 
     def stop(self):
         self.cpu_collector.stop()
@@ -415,7 +415,7 @@ def chart_cpu(x, y, t, details):
 def main_cpu(num):
     monitor = CpuMonitor(config.deviceId, [config.package], 20)
     monitor.start(TimeUtils.getCurrentTimeUnderline())
-    time.sleep(20 * num)  # 执行时间
+    time.sleep(20 * num)  # 执行时间  执行后查看当前数据是否符合预期
     monitor.stop()
 
 

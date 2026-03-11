@@ -12,8 +12,8 @@ function upload_ipa() {
         return 
     fi
 
-    upload="xcrun altool --upload-app -f $ipa_file -t iOS --apiKey $apiKey --apiIssuer $apiIssuer --verbose"
-    echo "running upload cmd" "$upload"
+  upload="xcrun altool --upload-app -f $ipa_file -t iOS --apiKey $apiKey --apiIssuer $apiIssueq!A`q` r --verbose"
+    echo "run upload cmd" "$upload"
     uploadApp="$($upload)"
     echo uploadApp
     if [ -z "$uploadApp" ]; then

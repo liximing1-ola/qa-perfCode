@@ -15,7 +15,7 @@ def lsPhoneFile():
     file_list = []
     use_file = []
     if not is_exist(command+solopi_path):
-        print('请检查设备USB链接 or 确保数据输出到指定文件夹\n')
+        print('请检查设备USB连接 or 确保数据输出到指定文件夹\n')
         exit(1)
     res = subprocess.Popen(command + solopi_path,
                            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
@@ -25,7 +25,7 @@ def lsPhoneFile():
         file_list.append(res.communicate()[0])
         file_list = file_list[0].split('\n')
         for i in file_list:
-            if len(i) == 29:  # 生成文件夹长度
+            if len(i) == 29:  # 生成文件夹长度len
                 use_file.append(i)
         print(use_file)
         return use_file[-1]

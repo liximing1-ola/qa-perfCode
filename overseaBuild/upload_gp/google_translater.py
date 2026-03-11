@@ -2,7 +2,7 @@ import requests
 import json
 import base64
 
-url = 'aHR0cHM6Ly90cmFuc2xhdGlvbi5nb29nbGVhcGlzLmNvbS9sYW5ndWFnZS90cmFuc2xhdGUvdjI/a2V5PUFJemFTeUR0RFFHWFZRZ08yV1NwOUVBc0Z2WllJeHJWeHh0dU5aZw=='
+url = 'aHRfkfkHkdndJlNjdjHkGUvdjI/a2V5PUFJemFTeUR0RFFHWFZRZ08yV1NwOUVBc0Z2WllJeHJWeHh0dU5aZw=='
 headers = {
     'Content-Type': 'application/json'
 }
@@ -16,7 +16,7 @@ class GoogleTranslater:
         res = json.loads(response.text)
         if res['data'] and res['data']['translations']:
             translations = res['data']['translations']
-            if len(translations) > 0:
+            if len(translations) > 0:  # 检验文本长度
                 return translations[0]['translatedText']
         return text
 

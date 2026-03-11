@@ -5,13 +5,13 @@ import sys
 
 #  检查apk版本号等信息
 def getAppBaseInfo():
-    aapt_path = 'D:/build-tools/build-tools/29.0.2/aapt.exe'  # aapt.exe路径
+    aapt_path = 'D:/build-tools/build-tools/29.0.2/aapt.exe'  # aapt本地路径
     apk_path = sys.argv[1]
     get_info_command = "{} dump badging {}".format(aapt_path, apk_path)
-    output = os.popen(get_info_command)  # 执行命令，并将结果以字符串方式返回
+    output = os.popen(get_info_command)  # 结果将以字符串方式返回
     output = output.buffer.read().decode(encoding='utf-8')
     match = re.compile("package: name='(\S+)' versionCode='(\d+)' versionName='(\S+)'").match(
-        output)  # 通过正则匹配，获取包名，版本号，版本名称
+        output)  # 获取包名，版本号，版本名称
     if not match:
         print(output)
         raise Exception("can't get packageInfo")

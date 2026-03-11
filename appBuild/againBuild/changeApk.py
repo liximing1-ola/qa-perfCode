@@ -12,11 +12,13 @@ def unZip():
             os.system(cmd)
         elif choose == 2:
             file_path = sys.argv[1]
-            apk_path = sys.argv[1] + '.apk'
+            apk_path = sys.argv[1] + '.apk'  # app路径
             print(apk_path)
             # 2.5.0要移除 -c
             cmd = 'java -jar apktool_2.6.1.jar b {} -c -o {}'.format(file_path, apk_path)
             os.system(cmd)
+        elif choose == 3:
+            pass
     except Exception as error:
         print(error, 'LOCK PATH')
 

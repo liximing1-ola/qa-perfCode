@@ -64,8 +64,8 @@ def Fps():
         elif r == 2:
             n = 1
             while n <= 20:
-                swipe_list = ['adb shell input swipe 200 200 600 600 50',
-                              'adb shell input swipe 700 700 900 900 100']
+                swipe_list = ['adb shell input swipe 400 250 360 100 150',
+                              'adb shell input swipe 500 720 400 500 150']
                 s = random.choice(swipe_list)
                 os.system(s)
                 n += 1

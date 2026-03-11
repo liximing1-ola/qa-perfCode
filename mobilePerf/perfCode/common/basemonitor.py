@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
+
 logger = logging.getLogger(__name__)
+
+
 class Monitor(object):
 
     def __init__(self, **kwargs):
@@ -8,10 +11,10 @@ class Monitor(object):
         :param dict kwargs: 配置项
         """
         self.config = kwargs  # 配置项
-        self.matched_data = {}  # 采集到匹配的性能数据
+        self.matched_data = {}  # 采集性能数据
 
     def start(self):
-        """子类中实现该接口，开始采集性能数据"""
+        """子类中实现当前接口开始采集性能数据"""
         logger.warning("请在%s类中实现start方法" % type(self))
 
     def clear(self):
@@ -26,6 +29,7 @@ class Monitor(object):
         """保存数据
         """
         logger.warning("请在%s类中实现save方法" % type(self))
+        logger.debug(",")
 
 
 if __name__ == '__main__':

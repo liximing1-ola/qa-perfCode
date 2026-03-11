@@ -15,17 +15,17 @@ def lsPhoneFile():
     file_list = []
     use_file = []
     if not is_exist(command+solopi_path):
-        print('请检查设备USB链接 or 确保数据输出到指定文件夹\n')
+        print('请检查设备USB连接 or 确保数据输出到指定文件夹\n')
         exit(1)
     res = subprocess.Popen(command + solopi_path,
                            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
     stdout, stderr = res.communicate()
     if res.returncode == 0:
-        print('性能采集点文件夹(时间正序排列)：\n{}'.format(stdout))
+        print('数据采集点文件夹(按照时间正序排列)：\n{}'.format(stdout))
         file_list.append(res.communicate()[0])
         file_list = file_list[0].split('\n')
         for i in file_list:
-            if len(i) == 29:  # 生成文件夹长度
+            if len(i) == 29:  # 正常生成文件夹长度
                 use_file.append(i)
         return use_file[-1]
     elif stdout == '' and res.poll() is not None:
@@ -46,7 +46,7 @@ def is_exist(path):
         return False
     result = result.stderr.readline().decode('utf-8')
     if 'No such file or directory' in result:
-        print('please install solopi apk\n')
+        print('Please Install APK\n')
         return False
     return True
 
@@ -56,7 +56,7 @@ def main():
         now_time = time.strftime('%Y%m%d%H', time.localtime(time.time()))
         print('当前执行时间: {} \n'.format(now_time))
         lsPhoneFile()
-        perf_data_path = str(input('请选择复制要获取的性能采集文件夹(1=退出): '))
+        perf_data_path = str(input('选择复制要获取的性能数据文件夹(1=退出): '))
         if perf_data_path == '1':
             exit(1)
         if not os.path.exists(data_path):
@@ -75,25 +75,25 @@ def main():
         for file_dir in file_or_dir:
             if file_dir.startswith('帧率_FPS'):
                 shutil.move(os.path.join(re_data_path, file_dir), data_path + '/FPS' + '/FPS_{}.csv'.format(now))
-                print('FPS 执行成功')
+                print('FPS success')
 
-            elif file_dir.startswith('PSS-main'):
+            elif file_dir.startswith('PSS_main'):
                 shutil.move(os.path.join(re_data_path, file_dir), data_path + '/MEM' + '/MEM_{}.csv'.format(now))
-                print('MEM 执行成功')
+                print('MEM success')
 
-            elif file_dir.startswith('应用进程-main'):
+            elif file_dir.startswith('process_main'):
                 shutil.move(os.path.join(re_data_path, file_dir), data_path + '/CPU' + '/CPU_{}.csv'.format(now))
-                print('CPU 执行成功')
+                print('CPU success')
 
             elif file_dir.startswith('CPU温度_Temperature'):
                 shutil.move(os.path.join(re_data_path, file_dir), data_path + '/TEMP' + '/TEMP_{}.csv'.format(now))
-                print('TEMP 执行成功')
+                print('TEMP success')
             else:
                 pass
 
-        print('执行成功，请查看本地路径下文件 {}'.format(data_path))
+        print('执行成功，请查看当前路径下文件 {}'.format(data_path))
     except EOFError as error:
-        print('输入异常', error)
+        print('请检查你的输入项', error)
         exit(1)
     except Exception as error:
         print(error)

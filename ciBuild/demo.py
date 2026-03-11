@@ -5,23 +5,22 @@ from ciBuild.utils import upload_pgyer as PgyerUtil
 
 if __name__ == "__main__":
 
-    # 上传完成回调
     def upload_complete_callback(isSuccess, result):
         if isSuccess:
-            print('上传完成')
+            print('upload success')
             _data = result['data']
-            _url = _data['buildShortcutUrl'].strip()  # 去除首尾空格
+            _url = _data['buildShortcutUrl'].strip()
             _appVer = _data['buildVersion']
             _buildVer = _data['buildBuildVersion']
-            print('链接: https://www.pgyer.com/%s' % _url)
-            print('版本: %s (build %s)' % (_appVer, _buildVer))
+            print('link: https://www.pgyer.com/%s' % _url)
+            print('build: %s (build %s)' % (_appVer, _buildVer))
         else:
-            print('上传失败')
+            print('upload fail')
 
 
-    app_path = '<your app path>'  # App包路径
-    pgyer_api_key = '<your api key>'  # API KEY
-    pgyer_password = '<your app install password>'  # 安装密码
+    app_path = '<your app path>'
+    pgyer_api_key = '<your api key>'
+    pgyer_password = '<your app install password>'
 
     PgyerUtil.upload_to_pgyer(
         path=app_path,

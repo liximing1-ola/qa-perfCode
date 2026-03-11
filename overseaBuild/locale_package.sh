@@ -23,7 +23,7 @@ platformMap=(["1"]="All" ["2"]="Android" ["3"]="iOS")
 #declare -A typeMap
 typeMap=(["1"]="debug" ["2"]="release" ["3"]="store")
 
-releaseNotes="Happy New Year  Partyingers !\nBug fixes and improvements."
+releaseNotes=" fix success"
 
 echo "${platformMap[*]}"
 echo "$releaseNotes"

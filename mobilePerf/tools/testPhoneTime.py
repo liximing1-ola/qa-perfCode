@@ -62,7 +62,7 @@ class testPhoneTime:
     @staticmethod
     def getDev():
         """
-        :return: 获得设备id
+        :return: 获得设备信息 id
         """
         try:
             devices_info = os.popen('adb devices')
@@ -77,7 +77,7 @@ class testPhoneTime:
     @staticmethod
     def keyEvent(keycode):
         """
-        :param keycode: 键值
+        :param keycode: key
         """
         # KEYCODE_HOME = 3
         # KEYCODE_BACK = 4
@@ -100,8 +100,8 @@ class testPhoneTime:
         else:
             raise Exception('again')
         print(time_list)
-        print('去掉最高值：{}'.format(max(time_list)))
-        print('去掉最低值：{}'.format(min(time_list)))
+        print('max：{}'.format(max(time_list)))
+        print('min：{}'.format(min(time_list)))
         time_list.remove(max(time_list))
         time_list.remove(min(time_list))
         avg_time = int(sum(time_list) / len(time_list))
@@ -109,5 +109,5 @@ class testPhoneTime:
 
 
 if __name__ == '__main__':
-    testPhoneTime.main('cold')  # 冷启动
-    testPhoneTime.main('hot')  # 热启动
+    testPhoneTime.main('cold')  # cold启动
+    testPhoneTime.main('hot')  # hot启动

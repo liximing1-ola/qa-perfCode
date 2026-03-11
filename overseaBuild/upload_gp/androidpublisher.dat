@@ -1,1 +1,25 @@
-{"access_token": "ya29.a0ARrdaM9dt8lXl-LKm7O1QdkEQreGmzp-OiAzcskwVhzEt4VBZYDi9uQeZDV_VQX2yqIoPWzkpltIkt9Ba-7U5LxoTaa_arUlWIxogzHdLPo5CYV1g33-qbMHvXkitLBK4Cp1pDLtP6LlVHz0sKJ44sVF4y0Qqg", "client_id": "384224922330-17n9rre1f10vc79cdgq5654q1tdjr6ks.apps.googleusercontent.com", "client_secret": "0MQFxNZCYzxX7xenTY6wBtzJ", "refresh_token": "1//0ejeAM9UPYnpaCgYIARAAGA4SNwF-L9Ir4nXdlIouBEV34D3AM0czN86uX4MfJRFeNoJ3jpoOEwQcmmkeVSpCO-nsXV7RZQDy5Ag", "token_expiry": "2021-07-07T13:46:22Z", "token_uri": "https://accounts.google.com/o/oauth2/token", "user_agent": null, "revoke_uri": "https://oauth2.googleapis.com/revoke", "id_token": null, "id_token_jwt": null, "token_response": {"access_token": "ya29.a0ARrdaM9dt8lXl-LKm7O1QdkEQreGmzp-OiAzcskwVhzEt4VBZYDi9uQeZDV_VQX2yqIoPWzkpltIkt9Ba-7U5LxoTaa_arUlWIxogzHdLPo5CYV1g33-qbMHvXkitLBK4Cp1pDLtP6LlVHz0sKJ44sVF4y0Qqg", "expires_in": 3599, "scope": "https://www.googleapis.com/auth/androidpublisher", "token_type": "Bearer"}, "scopes": ["https://www.googleapis.com/auth/androidpublisher"], "token_info_uri": "https://oauth2.googleapis.com/tokeninfo", "invalid": false, "_class": "OAuth2Credentials", "_module": "oauth2client.client"}
+{"access_token":
+"ya29.a0ARrdaM9dt8lXl-
+LKm7O1QdkEQreGmzp-
+OiAzcskwVhzEt4VBZYDi9uQeZDV_
+VQX2yqIoPWzkpltIkt9Ba-
+7U5LxoTaa_arUlWIxogzHdLPo5CYV1g33-
+qbMHvXkitLBK4Cp1pDLtP6LlVHz0sKJ44sVF4y0Qqg",
+"client_id": "384224922330-17n9rre1f10vc79cdgq5654q1tdjr6ks.apps.googleusercontent.com",
+"client_secret": "0MQFxNZCYzxX7xenTY6wBtzJ",
+"refresh_token": "1//0ejeAM9UPYnpaCgYIARAAGA4SNwF-
+L9Ir4nXdlIouBEV34D3AM0czN86uX4MfJRFeNoJ3jpoOEwQcmmkeVSpCO-nsXV7RZQDy5Ag",
+"token_expiry": "2025-07-07T13:46:22Z",
+"token_uri": "https://accounts.google.com/o/oauth2/token",
+"user_agent": null,
+"revoke_uri": "https://oauth2.googleapis.com/revoke",
+"id_token": null,
+"id_token_jwt": null,
+"token_response":
+{"access_token": "ya29.a0ARrdaM9dt8lXl-LKm7O1QdkEQreGmzp-OiAzcskwVhzEt4VBZYDi9uQeZDV_VQX2yqIoPWzkpltIkt9Ba-7U5LxoTaa_arUlWIxogzHdLPo5CYV1g33-qbMHvXkitLBK4Cp1pDLtP6LlVHz0sKJ44sVF4y0Qqg",
+ "expires_in": 3599, "scope": "https://www.googleapis.com/auth/androidpublisher/louts/oauth2/",
+ "token_type": "Bearer"},
+ "scopes": ["https://www.googleapis.com/auth/androidpublisher"],
+  "token_info_uri": "https://oauth2.googleapis.com/tokeninfo",
+  "invalid": false, "_class": "OAuth2Credentials", "_module":
+   "oauth2client.client"}

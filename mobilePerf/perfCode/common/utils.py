@@ -3,7 +3,10 @@ import os
 import time
 import re
 import zipfile
-BaseDir=os.path.dirname(os.path.abspath(__file__))
+
+BaseDir = os.path.dirname(os.path.abspath(__file__))
+
+
 class TimeUtils(object):
     UnderLineFormatter = "%Y_%m_%d_%H_%M_%S"
     NormalFormatter = "%Y-%m-%d %H-%M-%S"
@@ -29,22 +32,21 @@ class TimeUtils(object):
         return time.mktime(timeArray)
 
     @staticmethod
-    def is_between_times(timestamp,begin_timestamp,end_timestamp):
+    def is_between_times(timestamp, begin_timestamp, end_timestamp):
         if begin_timestamp < timestamp < end_timestamp:
             return True
         else:
             return False
 
-
     @staticmethod
-    def get_interval(begin_timestamp,end_timestamp):
+    def get_interval(begin_timestamp, end_timestamp):
         """
         :param begin_timestamp:
         :param end_timestamp:
-        :return:求起止时间戳之间的时间间隔 ，返回H,浮点数
+        :return:求起止时间戳之间的时间间隔
         """
-        interval = end_timestamp-begin_timestamp
-        return round(float(interval)/(60*60))
+        interval = end_timestamp - begin_timestamp
+        return round(float(interval) / (60 * 60))
 
 
 class FileUtils(object):
@@ -77,7 +79,7 @@ class FileUtils(object):
                 if pattern:
                     match = re.match(pattern, oneFile, flags=0)
                 if match:
-                    file_list.append(os.path.join(path, oneFile))  # 是文件 且匹配正则成功 则添加文件
+                    file_list.append(os.path.join(path, oneFile))
             elif os.path.isdir(os.path.join(path, oneFile)):
                 file_list.extend(FileUtils.get_files(os.path.join(path, oneFile), pattern))  # 是文件夹 遍历下一级目录下 符合正则的文件 并追加
         return file_list
@@ -111,6 +113,7 @@ class FileUtils(object):
         t = os.path.getmtime(filePath)
         return t
 
+
 class ZipUtils(object):
 
     @staticmethod
@@ -131,19 +134,22 @@ class ZipUtils(object):
             zf.write(tar, arcname)
         zf.close()
 
+
 def ms2s(value):
-    return round(value/1000.0, 2)
+    return round(value / 1000.0, 2)
+
 
 def transfer_temp(temp):
-    return round(temp/10.0, 1)
+    return round(temp / 10.0, 1)
+
 
 def mV2V(v):
-    return round(v/1000.0, 2)
+    return round(v / 1000.0, 2)
+
 
 def uA2mA(c):
-    return round(c/1000.0, 2)
+    return round(c / 1000.0, 2)
 
 
 if __name__ == '__main__':
-    ZipUtils.zip_dir("/Users/look/Desktop/project/mobileperf-turandot/mobileperf/common/test", "test.zip")
-
+    ZipUtils.zip_dir("/Users/project/mobileperf/common/test", "test.zip")

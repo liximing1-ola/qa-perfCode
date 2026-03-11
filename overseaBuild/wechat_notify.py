@@ -14,7 +14,7 @@ ciNum = sys.argv[7]
 buildUser = sys.argv[8]
 buildBranch = sys.argv[9]
 
-url = 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={换成自己的}'
+url = 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={}'.format('')
 headers = {
     'Content-Type': 'application/json'
 }
@@ -35,9 +35,8 @@ elif int(buildNum) == 0:
         "msgtype": "markdown",
         "markdown": {
             "content": f'''{changeLog}
-> Trigger: **{buildUser}**
-> Branch: **{buildBranch}**
-'''
+            > Trigger: **{buildUser}**
+            > Branch: **{buildBranch}** '''
         }
     }
     logResponse = requests.post(url, data=json.dumps(logValues), headers=headers)
@@ -46,17 +45,17 @@ else:
     jump_list = []
     android_jump = {
         "type": 1,
-        "url": "https://www.pgyer.com/partying/",
+        "url": "https://www.pgyer.com/",
         "title": "Android包下载地址"
     }
     ios_jump = {
         "type": 1,
-        "url": "https://www.pgyer.com/partying/",
+        "url": "https://www.pgyer.com/",
         "title": "iOS包下载地址"
     }
     all_jum = {
         "type": 1,
-        "url": "https://www.pgyer.com/partying",
+        "url": "https://www.pgyer.com/",
         "title": "应用下载地址"
     }
     if buildPlatform == "All":
@@ -66,23 +65,23 @@ else:
     else:
         jump_list.append(all_jum)
 
-    title = f"Partying {ciNum} 号包"
+    title = f"build {ciNum} 号包"
     description = f"{buildType}打好了~~~"
-    articlesUrl = "https://www.pgyer.com/partying"
+    articlesUrl = "https://www.pgyer.com/app"
 
     if buildType == "store":
-        titleDict = {'All': f"Partying {versionName} 已上传Google Play & App Store",
-                     'iOS': f"Partying {versionName} 已上传App Store",
-                     'Android': f"Partying {versionName} 已上传Google Play"}
+        titleDict = {'All': f"app {versionName} 已上传Google Play & App Store",
+                     'iOS': f"app {versionName} 已上传App Store",
+                     'Android': f"app {versionName} 已上传Google Play"}
         title = titleDict[buildPlatform]
-        descDict = {'All': f"Partying {versionName} 已上传至Google Play 草稿箱和 TestFlight，注意提审！",
-                    'iOS': f"Partying {versionName} 已上传至TestFlight，注意提审！",
-                    'Android': f"Partying {versionName} 已上传至Google Play 草稿箱，注意提审！"}
+        descDict = {'All': f"app {versionName} 已上传至Google Play 草稿箱和 TestFlight，注意提审！",
+                    'iOS': f"app {versionName} 已上传至TestFlight，注意提审！",
+                    'Android': f"app {versionName} 已上传至Google Play 草稿箱，注意提审！"}
         description = descDict[buildPlatform]
         jump_list = []
     elif buildType == "channel":
-        title = f"Partying {versionName} 渠道包已打好"
-        description = f"Partying {versionName} 渠道包已打好，注意分发！"
+        title = f"app {versionName} 渠道包已打好"
+        description = f"app {versionName} 渠道包已打好，注意分发！"
         articlesUrl = f"https://dl.1dmy.com/apk/pt-channel-{versionName}-{buildNum}/"
         jump_list = []
 

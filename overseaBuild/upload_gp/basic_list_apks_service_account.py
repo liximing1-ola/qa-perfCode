@@ -24,7 +24,6 @@ import httplib2
 from oauth2client import client
 from oauth2client.service_account import ServiceAccountCredentials
 
-
 SERVICE_ACCOUNT_EMAIL = (
     'oversea@api-8777402275515667639-616616.iam.gserviceaccount.com')
 
@@ -39,49 +38,51 @@ argparser.add_argument('subToken',
 
 
 def main():
-  # Load the key in PKCS 12 format that you downloaded from the Google APIs
-  # Console when you created your Service account.
-#   f = open('key.p12', 'rb')
-#   key = f.read()
-#   f.close()
+    # Load the key in PKCS 12 format that you downloaded from the Google APIs
+    # Console when you created your Service account.
+    #   f = open('key.p12', 'rb')
+    #   key = f.read()
+    #   f.close()
 
-  # Create an httplib2.Http object to handle our HTTP requests and authorize it
-  # with the Credentials. Note that the first parameter, service_account_name,
-  # is the Email address created for the Service account. It must be the email
-  # address associated with the key that was created.
-  credentials = ServiceAccountCredentials.from_json_keyfile_name('key.json',
-      scopes=['https://www.googleapis.com/auth/androidpublisher'])
-  http = httplib2.Http()
-  http = credentials.authorize(http)
+    # Create an httplib2.Http object to handle our HTTP requests and authorize it
+    # with the Credentials. Note that the first parameter, service_account_name,
+    # is the Email address created for the Service account. It must be the email
+    # address associated with the key that was created.
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('key.json',
+                                                                   scopes=[
+                                                                       'https://www.googleapis.com/auth/androidpublisher'])
+    http = httplib2.Http()
+    http = credentials.authorize(http)
 
-  service = build('androidpublisher', 'v3', http=http)
+    service = build('androidpublisher', 'v3', http=http)
 
-  # Process flags and read their values.
-  flags = argparser.parse_args()
+    # Process flags and read their values.
+    flags = argparser.parse_args()
 
-  package_name = flags.package_name
-  subId = flags.subId
-  subToken = flags.subToken
+    package_name = flags.package_name
+    subId = flags.subId
+    subToken = flags.subToken
 
-  try:
+    try:
 
-    # edit_request = service.edits().insert(body={}, packageName=package_name)
-    # result = edit_request.execute()
-    # edit_id = result['id']
+        # edit_request = service.edits().insert(body={}, packageName=package_name)
+        # result = edit_request.execute()
+        # edit_id = result['id']
 
-    subRes = service.purchases().subscriptions().get(
-      packageName=package_name,subscriptionId=subId,token=subToken).execute()
-    print(subRes)
+        subRes = service.purchases().subscriptions().get(
+            packageName=package_name, subscriptionId=subId, token=subToken).execute()
+        print(subRes)
 
-    # apks_result = service.edits().bundles().list(
+        # apks_result = service.edits().bundles().list(
         # editId=edit_id, packageName=package_name).execute()
 
-    # for apk in apks_result['bundles']:
-    #   print('versionCode: %s, binary.sha1: %s' % (apk['versionCode'], apk['sha1']))
+        # for apk in apks_result['bundles']:
+        #   print('versionCode: %s, binary.sha1: %s' % (apk['versionCode'], apk['sha1']))
 
-  except client.AccessTokenRefreshError:
-    print ('The credentials have been revoked or expired, please re-run the '
-           'application to re-authorize')
+    except client.AccessTokenRefreshError:
+        print('The credentials have been revoked or expired, please re-run the '
+              'application to re-authorize')
+
 
 if __name__ == '__main__':
-  main()
+    main()

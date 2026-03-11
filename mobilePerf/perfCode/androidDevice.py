@@ -20,10 +20,10 @@ class ADB(object):
     adb_path = None
 
     def __init__(self, device_id=None):
+        self._logcat_running = None
         self._adb_path = ADB.get_adb_path()  # adb.exe程序的绝对路径
-        self._device_id = device_id  # 设备id adb serialNum
-        self._need_quote = None
-        self._logcat_handle = []
+        self._device_id = device_id  # 设备id adb serialNum  #
+        self._logcat_handle = []  # logcat记录
         self._system_version = None
         self._sdk_version = None
         self._phone_brand = None
@@ -38,8 +38,8 @@ class ADB(object):
 
     @staticmethod
     def get_adb_path():
-        """返回adb.exe的绝对路径。优先使用指定的adb，若环境变量未指定，则返回当前脚本tools目录下的adb
-
+        """
+        返回adb的绝对路径，默认使用指定adb路径，若环境变量未指定 ，则返回当前脚本目录下的路径
         :return: 返回adb.exe的绝对路径
         :rtype: str
         """
@@ -53,18 +53,17 @@ class ADB(object):
         result = proc.stdout.read()
         logger.debug(result)
         if not isinstance(result, str):
-            result = str(result, 'utf-8')
-        # 说明自带adb  windows上返回结果不是这样 另外有可能第一次执行，adb会不正常
+            result = str(result, 'utf-8')  # 说明自带adb  windows上返回结果不是这样 另外有可能第一次执行，adb会不正常
         if result and "command not found" not in result:
             ADB.adb_path = "adb"
             logger.debug("system have adb")
             return ADB.adb_path
-        logger.debug("system have no adb")
+        logger.debug("system don't have adb")
         cur_path = os.path.dirname(os.path.abspath(__file__))
         ADB.os_name = platform.system()
-        logger.debug("platform :" + ADB.os_name)
+        logger.debug("Platform :" + ADB.os_name)
         if ADB.os_name == "Windows":
-            ADB.adb_path = os.path.join(cur_path, u'adb.exe')
+            ADB.adb_path = os.path.join(cur_path, u'adb.exe')  #
         elif ADB.os_name == "Darwin":
             ADB.adb_path = os.path.join(cur_path, "platform-tools-latest-darwin", "platform-tools", "adb")
         else:
@@ -73,7 +72,7 @@ class ADB(object):
 
     @staticmethod
     def get_os_name():
-        if ADB.os_name:
+        if ADB.os_name:  # adb名称
             return ADB.os_name
         ADB.os_name = platform.system()
         return ADB.os_name
@@ -81,7 +80,7 @@ class ADB(object):
     @staticmethod
     def is_connected(device_id):
         """
-        检查设备是否连接上
+        检查设备是否连接
         """
         if device_id in ADB.list_device():
             return True
@@ -290,12 +289,12 @@ class ADB(object):
             if ret is not None:
                 break
             retry_count -= 1
-        return ret
+            return ret
 
     def run_shell_cmd(self, cmd, **kwds):
         """执行 adb shell 命令
         """
-        # 如果失去连接后，adb又正常连接了
+        # 失去连接后，adb重连
         if not self.before_connect and self.after_connect:
             cpu_uptime_file = os.path.join(RuntimeData.package_save_path, "uptime.txt")
             with open(cpu_uptime_file, "a+", encoding="utf-8") as writer:
@@ -337,7 +336,7 @@ class ADB(object):
                         logger.error(e)
                 if log:
                     log_is_none = 4
-                    # logger.debug(log)
+                    logger.debug(log)
                     logs.append(log)
                     # if self._log_pipe.poll() != None:
                     #     logger.debug('process:%s have exited' % self._log_pipe.pid)
@@ -390,7 +389,7 @@ class ADB(object):
     def start_logcat(self, save_dir, process_list=None, params=''):
         """运行logcat进程
         :param save_dir:
-        :param list process_list: 要捕获日志的进程名或进程ID列表，为空则捕获所有进程,输入 ['system_server']可捕获系统进程的日志
+        :param list process_list: 捕获日志进程ID列表，为空则捕获所有进程,输入 ['system_server']可捕获系统进程的日志
         :param str params: 参数
         """
         if process_list is None:
@@ -401,9 +400,9 @@ class ADB(object):
             logger.warning('logcat process have started,not need start')
             return
         # sdk 26一下可以执行logcat -c的操作， 8.0以上的系统不能执行，会报"failed to clear the 'main' log"的错 图兰朵没问题
-        # if self.get_sdk_version() <  26:
-        try:  # 有些机型上会报permmison denied，但是logcat -c的代码仍会部分执行，所以加try 保护
-            self.run_shell_cmd('logcat -c ' + params)  # 清除缓冲区
+        # if self.get_sdk_version() < 26:
+        try:
+            self.run_shell_cmd('logcat -c ' + params)  # 清除缓冲
         except RuntimeError as e:
             logger.warning(e)
         self._logcat_running = True  # logcat进程是否启动
@@ -424,7 +423,7 @@ class ADB(object):
     def wait_for_device(self, timeout=180):
         """等待设备连接
         """
-        if not self.run_adb_cmd("wait-for-device", timeout):
+        if not self.run_adb_cmd("wait-for-device", ):
             logger.warning("adb wait-for-device timeout")
             return False
         return True
@@ -759,7 +758,7 @@ class ADB(object):
 
     def get_process_stack_from_pid(self, pid, save_path):
         """
-        :param package_name: 进程名
+        :param packageName: 进程名
         :param save_path: 堆栈文件保存路径
         :return: 无
         """
@@ -799,8 +798,6 @@ class ADB(object):
         return self._system_version
 
     def get_genie_uuid(self):
-        """获取天猫精灵uuid，如：F51823A6DCC13AA8FDFAA78B3D124DC3
-        """
         uuid = self.run_shell_cmd("getprop ro.genie.uuid")
         if uuid:
             return uuid
@@ -808,8 +805,6 @@ class ADB(object):
             return ""
 
     def get_genie_wifi(self):
-        """获取天猫精灵wifi mac 地址，如：38:d2:ca:b7:00:6d
-        """
         wifi_mac = self.run_shell_cmd("cat /sys/class/net/wlan0/address")
         if wifi_mac:
             return wifi_mac
@@ -817,8 +812,6 @@ class ADB(object):
             return ""
 
     def get_package_ver(self, package):
-        """获取应用版本信息
-        """
         package_ver = self.run_shell_cmd("dumpsys package " + package)
         if package_ver:
             return package_ver
@@ -826,34 +819,24 @@ class ADB(object):
             return ""
 
     def get_sdk_version(self):
-        """获取SDK版本，如：16
-        """
         if not self._sdk_version:
             self._sdk_version = int(self.run_shell_cmd('getprop ro.build.version.sdk'))
         return self._sdk_version
 
     def get_phone_brand(self):
-        """获取手机品牌  如：Mi Samsung OnePlus
-        """
         if not self._phone_brand:
             self._phone_brand = self.run_shell_cmd('getprop ro.product.brand')
         return self._phone_brand
 
     def get_phone_model(self):
-        """获取手机型号  如：A0001 M2S
-        """
         if not self._phone_model:
             self._phone_model = self.run_shell_cmd('getprop ro.product.model')
         return self._phone_model
 
     def get_screen_size(self):
-        """获取屏幕大小  如：5.5 可能获取不到
-        """
         return self.run_shell_cmd('getprop ro.product.screensize')
 
     def get_wm_size(self):
-        """获取屏幕分辨率  如：Physical size:1080*1920
-        """
         return self.run_shell_cmd('wm size')
 
     def get_cpu_abi(self):
@@ -1143,7 +1126,7 @@ class ADB(object):
         return result.find('Success') >= 0
 
 
-class AndroidDevice():
+class AndroidDevice:
     def __init__(self, device_id=None):
         self.adb = None
         self.is_local = AndroidDevice.is_local_device(device_id)
@@ -1174,20 +1157,20 @@ class AndroidDevice():
 
 
 if __name__ == '__main__':
-    device = AndroidDevice("WST4DYVWKBFEV8Q4")
-    cmd = "cat /sys/class/net/wlan0/address"
-    cmd = "ls /data/local/tmp"
+    device = AndroidDevice("WST4DYVWKBFEVUB8Q4")
+    cmd_1 = "cat /sys/class/net/wlan0/address"
+    cmd_1 = "ls /data/local/tmp"  #
 
     current_time = time.time()
-    ogg_path = "/Users/look/Desktop/audio_auto_test/autoTestPlatform_Gagent/results"
+    ogg_path = "/Users/look/Desktop/auto_test/autoTestPlatform_Gagent/results"
     results_file_list = os.listdir(ogg_path)
     import shutil
 
     for result_file in results_file_list:
-        # 获取文件创建时间戳
+        # 获取文件时间戳
         result_path = os.path.join(ogg_path, result_file)
         create_timestamp = os.path.getctime(result_path)
-        # 如果超过一天时间，清理
-        if current_time - create_timestamp > 24 * 60 * 60:
-            logger.debug("rm :" + result_path)
+        # 超过72h后清理文件
+        if current_time - create_timestamp > 72 * 60 * 60:
+            logger.debug("rm :" + result_path)  #
             shutil.rmtree(result_path)

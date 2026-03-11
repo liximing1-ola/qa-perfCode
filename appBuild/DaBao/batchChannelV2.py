@@ -85,10 +85,9 @@ if __name__ == '__main__':
         with open(conf_file) as f:
             lines = f.readlines()
             for line in lines:
-                if line.startswith('#'):  # 以#开头的line为注释，忽略掉不处理
+                if line.startswith('#'):
                     continue
                 line_args = line.split()
-                # print(sys.argv[:2])
                 tmp_args = sys.argv[:2]
                 tmp_args.extend(line_args)
                 sys.argv = tmp_args
