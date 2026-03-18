@@ -1,0 +1,4 @@
+[2026-03-18 16:45:28,909]DEBUG:mobileperf:log:debug test
+[2026-03-18 16:45:28,909]INFO:mobileperf:log:info test
+[2026-03-18 16:45:28,909]WARNING:mobileperf:log:warning test
+[2026-03-18 16:45:28,910]ERROR:mobileperf:log:error test

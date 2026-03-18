@@ -3,20 +3,29 @@
 <cite>
 **Referenced Files in This Document**
 - [README.md](file://README.md)
-- [mobilePerf/run.sh](file://mobilePerf/run.sh)
-- [mobilePerf/perfCode/androidDevice.py](file://mobilePerf/perfCode/androidDevice.py)
-- [mobilePerf/perfCode/cpu_top.py](file://mobilePerf/perfCode/cpu_top.py)
-- [mobilePerf/perfCode/logcat.py](file://mobilePerf/perfCode/logcat.py)
-- [mobilePerf/perfCode/runFps.py](file://mobilePerf/perfCode/runFps.py)
-- [mobilePerf/perfCode/common/basemonitor.py](file://mobilePerf/perfCode/common/basemonitor.py)
-- [mobilePerf/perfCode/globaldata.py](file://mobilePerf/perfCode/globaldata.py)
-- [appBuild/openBuild.bat](file://appBuild/openBuild.bat)
-- [appBuild/DaBao/batchChannelV2.py](file://appBuild/DaBao/batchChannelV2.py)
-- [appBuild/againBuild/changeApk.py](file://appBuild/againBuild/changeApk.py)
-- [ciBuild/sh_pgyer_upload.sh](file://ciBuild/sh_pgyer_upload.sh)
-- [ciBuild/utils/upload_pgyer.py](file://ciBuild/utils/upload_pgyer.py)
-- [overseaBuild/build_apk.sh](file://overseaBuild/build_apk.sh)
-- [overseaBuild/upload_gp/upload_apks_with_listing.py](file://overseaBuild/upload_gp/upload_apks_with_listing.py)
+- [openBuild.bat](file://appBuild/openBuild.bat)
+- [batchChannelV2.py](file://appBuild/DaBao/batchChannelV2.py)
+- [againKey.py](file://appBuild/againBuild/againKey.py)
+- [changeApk.py](file://appBuild/againBuild/changeApk.py)
+- [changeRes.py](file://appBuild/againBuild/changeRes.py)
+- [changeImage.py](file://appBuild/DaBao/changeImage.py)
+- [getAppInfo.py](file://appBuild/DaBao/getAppInfo.py)
+- [upload_pgyer.py](file://ciBuild/utils/upload_pgyer.py)
+- [sh_pgyer_upload.sh](file://ciBuild/sh_pgyer_upload.sh)
+- [run.sh](file://mobilePerf/run.sh)
+- [changeFile.py](file://mobilePerf/tools/changeFile.py)
+- [csvToChart.py](file://mobilePerf/tools/csvToChart.py)
+- [basemonitor.py](file://mobilePerf/perfCode/common/basemonitor.py)
+- [androidDevice.py](file://mobilePerf/perfCode/androidDevice.py)
+- [cpu_top.py](file://mobilePerf/perfCode/cpu_top.py)
+- [config.py](file://mobilePerf/perfCode/common/config.py)
+- [globaldata.py](file://mobilePerf/perfCode/globaldata.py)
+- [build_app.sh](file://overseaBuild/build_app.sh)
+- [build_apk.sh](file://overseaBuild/build_apk.sh)
+- [build_ipa.sh](file://overseaBuild/build_ipa.sh)
+- [upload_apks_with_listing.py](file://overseaBuild/upload_gp/upload_apks_with_listing.py)
+- [google_translater.py](file://overseaBuild/upload_gp/google_translater.py)
+- [wechat_notify.py](file://overseaBuild/wechat_notify.py)
 </cite>
 
 ## Table of Contents
@@ -29,145 +38,165 @@
 7. [Performance Considerations](#performance-considerations)
 8. [Troubleshooting Guide](#troubleshooting-guide)
 9. [Conclusion](#conclusion)
+10. [Appendices](#appendices)
 
 ## Introduction
-QA Performance Code is a mobile application testing and automation framework designed to streamline performance monitoring, build automation, and CI/CD integration for QA teams and developers. It focuses on collecting Android performance metrics (CPU, memory, FPS, temperature), automating APK builds and packaging, and enabling international deployment via automated stores and distribution platforms. The project integrates with the SoloPi framework for Android performance data collection and provides modular tooling for local development, continuous integration, and overseas distribution.
+This QA Performance Testing Automation Project is a comprehensive Android application performance testing and build automation toolkit. It integrates APK build and modification utilities, a real-time performance monitoring system for CPU, memory, FPS, and temperature, CI/CD integration for automated uploads, and international distribution capabilities for global markets. The project targets QA engineers, DevOps teams, and product developers who need reliable, repeatable performance validation and streamlined release workflows across Android and iOS platforms.
 
 ## Project Structure
-The repository is organized into four primary modules:
-- mobilePerf: Android performance data collection, log parsing, and reporting pipeline
-- appBuild: Local build and packaging utilities for Android (APK signing, resource modification, channel packaging)
-- ciBuild: Continuous integration utilities for uploading artifacts to distribution platforms
-- overseaBuild: International build and deployment automation for Android app bundles and store listings
+The repository is organized by functional domains:
+- appBuild: Build and packaging utilities for Android APKs and channels
+- ciBuild: CI/CD integration helpers for uploading artifacts
+- mobilePerf: Performance monitoring, data collection, and reporting
+- overseaBuild: International build and distribution automation for global stores
 
 ```mermaid
 graph TB
-subgraph "Mobile Performance (mobilePerf)"
-MP_ADB["androidDevice.py"]
-MP_CPU["cpu_top.py"]
-MP_LOGCAT["logcat.py"]
-MP_RUNSH["run.sh"]
-MP_COMMON["common/basemonitor.py"]
-MP_GLOBAL["globaldata.py"]
-MP_FPS["runFps.py"]
+subgraph "Build and Packaging"
+AB["appBuild/"]
+AB_DB["DaBao/"]
+AB_AG["againBuild/"]
 end
-subgraph "Local Build (appBuild)"
-AB_OPEN["openBuild.bat"]
-AB_DABAO["DaBao/batchChannelV2.py"]
-AB_AGAIN["againBuild/changeApk.py"]
+subgraph "CI/CD"
+CB["ciBuild/"]
 end
-subgraph "CI Upload (ciBuild)"
-CI_SH["sh_pgyer_upload.sh"]
-CI_PY["utils/upload_pgyer.py"]
+subgraph "Performance Monitoring"
+MP["mobilePerf/"]
+MP_Tools["tools/"]
+MP_Code["perfCode/"]
+MP_Common["common/"]
 end
-subgraph "Overseas Deployment (overseaBuild)"
-OB_APK["build_apk.sh"]
-OB_GP["upload_gp/upload_apks_with_listing.py"]
+subgraph "International Distribution"
+OB["overseaBuild/"]
+OB_GP["upload_gp/"]
 end
-MP_RUNSH --> MP_CPU
-MP_RUNSH --> MP_LOGCAT
-MP_RUNSH --> MP_FPS
-MP_ADB --> MP_CPU
-MP_ADB --> MP_LOGCAT
-AB_OPEN --> AB_DABAO
-AB_OPEN --> AB_AGAIN
-CI_SH --> CI_PY
-OB_APK --> OB_GP
+AB --> AB_DB
+AB --> AB_AG
+MP --> MP_Tools
+MP --> MP_Code
+MP_Code --> MP_Common
+OB --> OB_GP
+CB --> OB
 ```
 
 **Diagram sources**
-- [mobilePerf/run.sh:1-11](file://mobilePerf/run.sh#L1-L11)
-- [mobilePerf/perfCode/androidDevice.py:1-120](file://mobilePerf/perfCode/androidDevice.py#L1-L120)
-- [mobilePerf/perfCode/cpu_top.py:206-383](file://mobilePerf/perfCode/cpu_top.py#L206-L383)
-- [mobilePerf/perfCode/logcat.py:17-70](file://mobilePerf/perfCode/logcat.py#L17-L70)
-- [mobilePerf/perfCode/runFps.py:54-94](file://mobilePerf/perfCode/runFps.py#L54-L94)
-- [mobilePerf/perfCode/common/basemonitor.py:7-37](file://mobilePerf/perfCode/common/basemonitor.py#L7-L37)
-- [mobilePerf/perfCode/globaldata.py:5-14](file://mobilePerf/perfCode/globaldata.py#L5-L14)
-- [appBuild/openBuild.bat:1-14](file://appBuild/openBuild.bat#L1-L14)
-- [appBuild/DaBao/batchChannelV2.py:23-78](file://appBuild/DaBao/batchChannelV2.py#L23-L78)
-- [appBuild/againBuild/changeApk.py:5-36](file://appBuild/againBuild/changeApk.py#L5-L36)
-- [ciBuild/sh_pgyer_upload.sh:1-103](file://ciBuild/sh_pgyer_upload.sh#L1-L103)
-- [ciBuild/utils/upload_pgyer.py:11-85](file://ciBuild/utils/upload_pgyer.py#L11-L85)
-- [overseaBuild/build_apk.sh:1-60](file://overseaBuild/build_apk.sh#L1-L60)
-- [overseaBuild/upload_gp/upload_apks_with_listing.py:93-197](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L93-L197)
+- [openBuild.bat:1-23](file://appBuild/openBuild.bat#L1-L23)
+- [README.md:1-37](file://README.md#L1-L37)
 
 **Section sources**
 - [README.md:1-37](file://README.md#L1-L37)
-- [mobilePerf/run.sh:1-11](file://mobilePerf/run.sh#L1-L11)
-- [appBuild/openBuild.bat:1-14](file://appBuild/openBuild.bat#L1-L14)
+- [openBuild.bat:1-23](file://appBuild/openBuild.bat#L1-L23)
 
 ## Core Components
-- mobilePerf: Provides Android device connectivity, performance metrics collection (CPU, FPS, memory, temperature), and log parsing. It leverages SoloPi for performance data acquisition and generates CSV reports and charts for analysis.
-- appBuild: Offers local build and packaging utilities for Android, including APK re-signing, resource modification, and channel packaging via Walle.
-- ciBuild: Automates artifact uploads to distribution platforms (e.g., Pgyer) using shell scripts and Python utilities.
-- overseaBuild: Handles international builds and deployments, including Flutter-based APK/AAB generation and Google Play listing updates.
-
-Key features:
-- Android performance data collection (CPU, memory, FPS, temperature)
-- APK building and packaging (signing, resource changes, channel packaging)
-- CI/CD integration for automated uploads
-- International deployment capabilities (Android app bundles and store listings)
+- APK Build and Modification Utilities
+  - Channel packaging and batch operations via Walle CLI
+  - Re-signing, decompiling, rebuilding, and resource editing
+- Performance Monitoring System
+  - Real-time metrics collection (CPU, memory, FPS, temperature)
+  - Automated data extraction and visualization
+- CI/CD Integration
+  - Automated artifact upload to distribution platforms
+- International Distribution
+  - Multi-language metadata translation and store uploads
 
 **Section sources**
-- [README.md:24-35](file://README.md#L24-L35)
-- [mobilePerf/perfCode/androidDevice.py:18-120](file://mobilePerf/perfCode/androidDevice.py#L18-L120)
-- [mobilePerf/perfCode/cpu_top.py:206-383](file://mobilePerf/perfCode/cpu_top.py#L206-L383)
-- [mobilePerf/perfCode/logcat.py:17-70](file://mobilePerf/perfCode/logcat.py#L17-L70)
-- [mobilePerf/perfCode/runFps.py:54-94](file://mobilePerf/perfCode/runFps.py#L54-L94)
-- [appBuild/DaBao/batchChannelV2.py:23-78](file://appBuild/DaBao/batchChannelV2.py#L23-L78)
-- [appBuild/againBuild/changeApk.py:5-36](file://appBuild/againBuild/changeApk.py#L5-L36)
-- [ciBuild/sh_pgyer_upload.sh:1-103](file://ciBuild/sh_pgyer_upload.sh#L1-L103)
-- [ciBuild/utils/upload_pgyer.py:43-108](file://ciBuild/utils/upload_pgyer.py#L43-L108)
-- [overseaBuild/build_apk.sh:1-60](file://overseaBuild/build_apk.sh#L1-L60)
-- [overseaBuild/upload_gp/upload_apks_with_listing.py:93-197](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L93-L197)
+- [batchChannelV2.py:1-120](file://appBuild/DaBao/batchChannelV2.py#L1-L120)
+- [againKey.py](file://appBuild/againBuild/againKey.py)
+- [changeApk.py:1-39](file://appBuild/againBuild/changeApk.py#L1-L39)
+- [changeRes.py](file://appBuild/againBuild/changeRes.py)
+- [changeImage.py](file://appBuild/DaBao/changeImage.py)
+- [getAppInfo.py](file://appBuild/DaBao/getAppInfo.py)
+- [upload_pgyer.py:1-108](file://ciBuild/utils/upload_pgyer.py#L1-L108)
+- [sh_pgyer_upload.sh](file://ciBuild/sh_pgyer_upload.sh)
+- [run.sh:1-29](file://mobilePerf/run.sh#L1-L29)
+- [changeFile.py:1-112](file://mobilePerf/tools/changeFile.py#L1-L112)
+- [csvToChart.py:1-151](file://mobilePerf/tools/csvToChart.py#L1-L151)
+- [basemonitor.py:1-37](file://mobilePerf/perfCode/common/basemonitor.py#L1-L37)
+- [androidDevice.py:1-800](file://mobilePerf/perfCode/androidDevice.py#L1-L800)
+- [cpu_top.py:1-433](file://mobilePerf/perfCode/cpu_top.py#L1-L433)
+- [config.py:1-20](file://mobilePerf/perfCode/common/config.py#L1-L20)
+- [globaldata.py:1-14](file://mobilePerf/perfCode/globaldata.py#L1-L14)
+- [build_app.sh:1-97](file://overseaBuild/build_app.sh#L1-L97)
+- [build_apk.sh](file://overseaBuild/build_apk.sh)
+- [build_ipa.sh](file://overseaBuild/build_ipa.sh)
+- [upload_apks_with_listing.py:1-198](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L1-L198)
+- [google_translater.py](file://overseaBuild/upload_gp/google_translater.py)
+- [wechat_notify.py](file://overseaBuild/wechat_notify.py)
 
 ## Architecture Overview
-The system architecture centers around three pillars:
-- Device Interaction Layer: Android device connectivity and shell commands
-- Performance Monitoring Pipeline: Metrics collection, storage, and visualization
-- Build and Distribution Pipeline: Local builds, CI uploads, and international deployments
+The system follows a modular, layered architecture:
+- Tooling Layer: Build and packaging scripts/utilities
+- Data Collection Layer: Device connectivity, metrics parsing, and storage
+- Reporting Layer: Data transformation and visualization
+- Integration Layer: CI/CD and distribution APIs
+- Orchestration Layer: Shell scripts and batch runners coordinating end-to-end workflows
 
 ```mermaid
 graph TB
-Dev["Android Device"]
-ADB["ADB Wrapper<br/>androidDevice.py"]
-Perf["Performance Collectors<br/>cpu_top.py, logcat.py, runFps.py"]
-Storage["CSV Reports<br/>prefData/, report/"]
-Charts["Charts Generator<br/>run.sh"]
-Build["Local Build Tools<br/>batchChannelV2.py, changeApk.py"]
-CI["CI Upload<br/>sh_pgyer_upload.sh, upload_pgyer.py"]
-Oversea["Overseas Build & Store<br/>build_apk.sh, upload_apks_with_listing.py"]
-Dev --> ADB
-ADB --> Perf
-Perf --> Storage
-Storage --> Charts
-Build --> Dev
-CI --> Dev
-Oversea --> Dev
+Dev["Developer/CI Runner"] --> Orchestrator["Orchestrator Scripts<br/>build_app.sh, run.sh"]
+Orchestrator --> Builder["Build Tools<br/>batchChannelV2.py, changeApk.py, againKey.py"]
+Orchestrator --> Perf["Performance Collector<br/>androidDevice.py, cpu_top.py"]
+Perf --> Storage["Metrics Storage<br/>CSV files"]
+Storage --> Report["Visualization<br/>csvToChart.py, changeFile.py"]
+Orchestrator --> Upload["CI Upload<br/>upload_pgyer.py"]
+Orchestrator --> Store["Store Upload<br/>upload_apks_with_listing.py"]
 ```
 
 **Diagram sources**
-- [mobilePerf/perfCode/androidDevice.py:18-120](file://mobilePerf/perfCode/androidDevice.py#L18-L120)
-- [mobilePerf/perfCode/cpu_top.py:206-383](file://mobilePerf/perfCode/cpu_top.py#L206-L383)
-- [mobilePerf/perfCode/logcat.py:17-70](file://mobilePerf/perfCode/logcat.py#L17-L70)
-- [mobilePerf/perfCode/runFps.py:54-94](file://mobilePerf/perfCode/runFps.py#L54-L94)
-- [mobilePerf/run.sh:1-11](file://mobilePerf/run.sh#L1-L11)
-- [appBuild/DaBao/batchChannelV2.py:23-78](file://appBuild/DaBao/batchChannelV2.py#L23-L78)
-- [appBuild/againBuild/changeApk.py:5-36](file://appBuild/againBuild/changeApk.py#L5-L36)
-- [ciBuild/sh_pgyer_upload.sh:1-103](file://ciBuild/sh_pgyer_upload.sh#L1-L103)
-- [ciBuild/utils/upload_pgyer.py:43-108](file://ciBuild/utils/upload_pgyer.py#L43-L108)
-- [overseaBuild/build_apk.sh:1-60](file://overseaBuild/build_apk.sh#L1-L60)
-- [overseaBuild/upload_gp/upload_apks_with_listing.py:93-197](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L93-L197)
+- [build_app.sh:1-97](file://overseaBuild/build_app.sh#L1-L97)
+- [run.sh:1-29](file://mobilePerf/run.sh#L1-L29)
+- [batchChannelV2.py:1-120](file://appBuild/DaBao/batchChannelV2.py#L1-L120)
+- [changeApk.py:1-39](file://appBuild/againBuild/changeApk.py#L1-L39)
+- [againKey.py](file://appBuild/againBuild/againKey.py)
+- [androidDevice.py:1-800](file://mobilePerf/perfCode/androidDevice.py#L1-L800)
+- [cpu_top.py:1-433](file://mobilePerf/perfCode/cpu_top.py#L1-L433)
+- [csvToChart.py:1-151](file://mobilePerf/tools/csvToChart.py#L1-L151)
+- [changeFile.py:1-112](file://mobilePerf/tools/changeFile.py#L1-L112)
+- [upload_pgyer.py:1-108](file://ciBuild/utils/upload_pgyer.py#L1-L108)
+- [upload_apks_with_listing.py:1-198](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L1-L198)
 
 ## Detailed Component Analysis
 
-### Mobile Performance Module (mobilePerf)
-The mobilePerf module orchestrates Android performance monitoring:
-- ADB wrapper manages device connectivity, shell commands, logcat capture, and file operations
-- CPU collector parses top output to compute device and per-package CPU usage
-- Logcat monitor captures and parses launch-time metrics and exceptions
-- FPS generator performs gesture-driven animations to measure frame performance
-- Run script coordinates CSV-to-chart conversion for CPU, FPS, memory, and temperature
+### Build and Packaging Utilities
+- Channel Packaging (Walle CLI)
+  - Supports single, multiple, and sequential channel generation
+  - Automatic APK renaming and batch processing
+- APK Modification
+  - Re-signing, decompile/rebuild cycles, and resource edits
+- Image Processing
+  - Batch grayscale conversion for branding or testing scenarios
+
+```mermaid
+sequenceDiagram
+participant U as "User"
+participant BC as "batchChannelV2.py"
+participant WL as "Walle CLI"
+participant FS as "File System"
+U->>BC : "Provide APK and channel spec"
+BC->>WL : "Execute batch channel commands"
+WL-->>BC : "Generated channel APKs"
+BC->>FS : "Rename APKs to standardized names"
+FS-->>U : "Channel packages ready"
+```
+
+**Diagram sources**
+- [batchChannelV2.py:1-120](file://appBuild/DaBao/batchChannelV2.py#L1-L120)
+
+**Section sources**
+- [batchChannelV2.py:1-120](file://appBuild/DaBao/batchChannelV2.py#L1-L120)
+- [againKey.py](file://appBuild/againBuild/againKey.py)
+- [changeApk.py:1-39](file://appBuild/againBuild/changeApk.py#L1-L39)
+- [changeRes.py](file://appBuild/againBuild/changeRes.py)
+- [changeImage.py](file://appBuild/DaBao/changeImage.py)
+- [getAppInfo.py](file://appBuild/DaBao/getAppInfo.py)
+
+### Performance Monitoring System
+- Device Abstraction
+  - Cross-platform ADB management, device detection, and logcat streaming
+- Metrics Collection
+  - CPU usage parsing, memory and temperature extraction, FPS sampling
+- Data Pipeline
+  - Automated CSV export and chart generation
 
 ```mermaid
 classDiagram
@@ -177,209 +206,195 @@ class AndroidDevice {
 +start_logcat()
 +stop_logcat()
 +run_shell_cmd()
-+pull_file()
-+push_file()
+}
+class CpuMonitor {
++start(start_time)
++stop()
++save()
 }
 class CpuCollector {
 +start(start_time)
 +stop()
 -_collect_package_cpu_thread(start_time)
--_top_cpuinfo()
 }
-class LogcatMonitor {
-+start()
-+stop()
-+add_log_handle(handle)
-+remove_log_handle(handle)
+class PckCpuInfo {
++_parse_cpu_usage()
++_parse_package()
 }
-class LaunchTime {
-+handle_launchTime(log_line)
--_get_launch_tag(log_line)
--_trim_value(content)
--_update_launch_list(content, timestamp)
-}
-class Monitor {
-<<abstract>>
-+start()
-+stop()
-+save()
-}
-class RuntimeData {
-+old_pid
-+packages
-+package_save_path
-+start_time
-+exit_event
-+top_dir
-+config_dic
-}
-Monitor <|-- LogcatMonitor
-AndroidDevice --> CpuCollector : "uses"
-AndroidDevice --> LogcatMonitor : "uses"
-LogcatMonitor --> LaunchTime : "uses"
-RuntimeData <.. CpuCollector : "shared state"
-RuntimeData <.. LogcatMonitor : "shared state"
+AndroidDevice <.. CpuMonitor : "uses"
+CpuMonitor --> CpuCollector : "owns"
+CpuCollector --> PckCpuInfo : "parses"
 ```
 
 **Diagram sources**
-- [mobilePerf/perfCode/androidDevice.py:18-120](file://mobilePerf/perfCode/androidDevice.py#L18-L120)
-- [mobilePerf/perfCode/cpu_top.py:206-383](file://mobilePerf/perfCode/cpu_top.py#L206-L383)
-- [mobilePerf/perfCode/logcat.py:17-70](file://mobilePerf/perfCode/logcat.py#L17-L70)
-- [mobilePerf/perfCode/common/basemonitor.py:7-37](file://mobilePerf/perfCode/common/basemonitor.py#L7-L37)
-- [mobilePerf/perfCode/globaldata.py:5-14](file://mobilePerf/perfCode/globaldata.py#L5-L14)
+- [androidDevice.py:1-800](file://mobilePerf/perfCode/androidDevice.py#L1-L800)
+- [cpu_top.py:1-433](file://mobilePerf/perfCode/cpu_top.py#L1-L433)
 
 **Section sources**
-- [mobilePerf/perfCode/androidDevice.py:18-120](file://mobilePerf/perfCode/androidDevice.py#L18-L120)
-- [mobilePerf/perfCode/cpu_top.py:206-383](file://mobilePerf/perfCode/cpu_top.py#L206-L383)
-- [mobilePerf/perfCode/logcat.py:17-70](file://mobilePerf/perfCode/logcat.py#L17-L70)
-- [mobilePerf/perfCode/runFps.py:54-94](file://mobilePerf/perfCode/runFps.py#L54-L94)
-- [mobilePerf/perfCode/common/basemonitor.py:7-37](file://mobilePerf/perfCode/common/basemonitor.py#L7-L37)
-- [mobilePerf/perfCode/globaldata.py:5-14](file://mobilePerf/perfCode/globaldata.py#L5-L14)
-- [mobilePerf/run.sh:1-11](file://mobilePerf/run.sh#L1-L11)
+- [androidDevice.py:1-800](file://mobilePerf/perfCode/androidDevice.py#L1-L800)
+- [cpu_top.py:1-433](file://mobilePerf/perfCode/cpu_top.py#L1-L433)
+- [basemonitor.py:1-37](file://mobilePerf/perfCode/common/basemonitor.py#L1-L37)
+- [config.py:1-20](file://mobilePerf/perfCode/common/config.py#L1-L20)
+- [globaldata.py:1-14](file://mobilePerf/perfCode/globaldata.py#L1-L14)
 
-### Local Build Module (appBuild)
-The appBuild module provides local build and packaging utilities:
-- Open build launcher displays available tasks for re-signing, decompiling, modifying resources, and channel packaging
-- Channel packaging via Walle supports single-channel, batch-channel, and sequence-based channel generation
-- APK decompile/recompile utilities enable quick resource edits and repackaging
-
-```mermaid
-flowchart TD
-Start(["Open Build Launcher"]) --> ChooseTask["Choose Task:<br/>Re-sign | Decompile | Modify Resources | Channel Packaging"]
-ChooseTask --> ReSign["Re-sign APK"]
-ChooseTask --> Decomp["Decompile APK"]
-ChooseTask --> ModifyRes["Modify APP Resources"]
-ChooseTask --> ChannelPack["Channel Packaging via Walle"]
-ReSign --> End(["Done"])
-Decomp --> End
-ModifyRes --> End
-ChannelPack --> End
-```
-
-**Diagram sources**
-- [appBuild/openBuild.bat:1-14](file://appBuild/openBuild.bat#L1-L14)
-- [appBuild/DaBao/batchChannelV2.py:23-78](file://appBuild/DaBao/batchChannelV2.py#L23-L78)
-- [appBuild/againBuild/changeApk.py:5-36](file://appBuild/againBuild/changeApk.py#L5-L36)
-
-**Section sources**
-- [appBuild/openBuild.bat:1-14](file://appBuild/openBuild.bat#L1-L14)
-- [appBuild/DaBao/batchChannelV2.py:23-78](file://appBuild/DaBao/batchChannelV2.py#L23-L78)
-- [appBuild/againBuild/changeApk.py:5-36](file://appBuild/againBuild/changeApk.py#L5-L36)
-
-### CI Upload Module (ciBuild)
-The ciBuild module automates artifact uploads to distribution platforms:
-- Shell script uploads APK/iPad to Pgyer using API tokens and progress checks
-- Python utility encapsulates token retrieval, upload, and build info polling
+### CI/CD Integration
+- Automated Upload to Distribution Platform
+  - Token-based upload flow with progress and status polling
+- Shell Script Wrapper
+  - Simplified invocation for CI environments
 
 ```mermaid
 sequenceDiagram
-participant CI as "CI Script"
-participant API as "Pgyer API"
-participant PY as "Python Utility"
-CI->>API : "Get upload token"
-API-->>CI : "Token + Endpoint"
-CI->>API : "Upload artifact"
-API-->>CI : "204 Accepted"
-CI->>PY : "Poll build info"
-PY->>API : "GET buildInfo"
-API-->>PY : "Processing | Published"
-PY-->>CI : "Final result"
+participant CI as "CI Job"
+participant SH as "sh_pgyer_upload.sh"
+participant PY as "upload_pgyer.py"
+participant API as "Distribution API"
+CI->>SH : "Trigger upload"
+SH->>PY : "Invoke upload script"
+PY->>API : "Get upload token"
+API-->>PY : "Token and endpoint"
+PY->>API : "Upload artifact"
+API-->>PY : "Accepted"
+PY->>API : "Poll build info"
+API-->>PY : "Processing complete"
+PY-->>SH : "Success"
+SH-->>CI : "Upload complete"
 ```
 
 **Diagram sources**
-- [ciBuild/sh_pgyer_upload.sh:54-103](file://ciBuild/sh_pgyer_upload.sh#L54-L103)
-- [ciBuild/utils/upload_pgyer.py:43-108](file://ciBuild/utils/upload_pgyer.py#L43-L108)
+- [sh_pgyer_upload.sh](file://ciBuild/sh_pgyer_upload.sh)
+- [upload_pgyer.py:1-108](file://ciBuild/utils/upload_pgyer.py#L1-L108)
 
 **Section sources**
-- [ciBuild/sh_pgyer_upload.sh:1-103](file://ciBuild/sh_pgyer_upload.sh#L1-L103)
-- [ciBuild/utils/upload_pgyer.py:11-108](file://ciBuild/utils/upload_pgyer.py#L11-L108)
+- [upload_pgyer.py:1-108](file://ciBuild/utils/upload_pgyer.py#L1-L108)
+- [sh_pgyer_upload.sh](file://ciBuild/sh_pgyer_upload.sh)
 
-### Overseas Build Module (overseaBuild)
-The overseaBuild module handles international builds and store deployments:
-- Flutter-based APK/AAB generation with flavor-specific configurations and Dart defines
-- Automated Google Play uploads with listing updates and release notes translation
+### International Distribution
+- Unified Build Orchestration
+  - Android and iOS builds coordinated in a single script
+- Store Upload and Metadata Management
+  - Automated AAB/APK uploads and multi-language release notes
+- Notification Integration
+  - WeChat notifications for build status and changelogs
 
 ```mermaid
 flowchart TD
-StartOB(["Start Overseas Build"]) --> Type{"Build Type"}
-Type --> |Debug| DebugBuild["Flutter APK Debug Build"]
-Type --> |Release| ReleaseBuild["Flutter APK Release Build"]
-Type --> |Store| StoreBuild["Flutter App Bundle Build"]
-DebugBuild --> UploadPgyer["Upload to Pgyer"]
-ReleaseBuild --> UploadPgyer
-StoreBuild --> GPUpload["Upload to Google Play"]
-GPUpload --> Translate["Translate Release Notes"]
-Translate --> Commit["Commit Listing Changes"]
-UploadPgyer --> EndOB(["Done"])
-Commit --> EndOB
+Start([Start Build]) --> Detect["Detect Platform and Type"]
+Detect --> Android{"Android?"}
+Android --> |Yes| BuildAPK["Run build_apk.sh"]
+Android --> |No| iOS{"iOS?"}
+iOS --> |Yes| BuildIPA["Run build_ipa.sh"]
+iOS --> |No| Both["Build Both Platforms"]
+Both --> BuildAPK
+Both --> BuildIPA
+BuildAPK --> ValidateAPK{"APK/AAB Exists?"}
+BuildIPA --> ValidateIPA{"IPA Exists?"}
+ValidateAPK --> |No| Fail["Notify Failure"]
+ValidateAPK --> |Yes| StoreUpload["Upload to Store"]
+ValidateIPA --> |No| Fail
+ValidateIPA --> |Yes| StoreUpload
+StoreUpload --> Translate["Translate Release Notes"]
+Translate --> Commit["Commit Listing Updates"]
+Commit --> Notify["Send WeChat Notification"]
+Notify --> End([Done])
 ```
 
 **Diagram sources**
-- [overseaBuild/build_apk.sh:1-60](file://overseaBuild/build_apk.sh#L1-L60)
-- [overseaBuild/upload_gp/upload_apks_with_listing.py:93-197](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L93-L197)
+- [build_app.sh:1-97](file://overseaBuild/build_app.sh#L1-L97)
+- [build_apk.sh](file://overseaBuild/build_apk.sh)
+- [build_ipa.sh](file://overseaBuild/build_ipa.sh)
+- [upload_apks_with_listing.py:1-198](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L1-L198)
+- [google_translater.py](file://overseaBuild/upload_gp/google_translater.py)
+- [wechat_notify.py](file://overseaBuild/wechat_notify.py)
 
 **Section sources**
-- [overseaBuild/build_apk.sh:1-60](file://overseaBuild/build_apk.sh#L1-L60)
-- [overseaBuild/upload_gp/upload_apks_with_listing.py:93-197](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L93-L197)
+- [build_app.sh:1-97](file://overseaBuild/build_app.sh#L1-L97)
+- [upload_apks_with_listing.py:1-198](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L1-L198)
+- [google_translater.py](file://overseaBuild/upload_gp/google_translater.py)
+- [wechat_notify.py](file://overseaBuild/wechat_notify.py)
 
 ## Dependency Analysis
-- mobilePerf depends on Android SDK tools (ADB) and SoloPi for performance data collection
-- appBuild relies on external tools (Walle, Apktool) for channel packaging and APK manipulation
-- ciBuild integrates with Pgyer APIs for artifact distribution
-- overseaBuild integrates with Google Play Developer API for international deployments
+- Internal Dependencies
+  - mobilePerf tools depend on common modules (config, utils, log) and runtime data
+  - Oversea build scripts coordinate with store upload utilities
+- External Dependencies
+  - ADB and platform tools for device operations
+  - Python libraries for HTTP uploads and visualization
+  - Store APIs for distribution
 
 ```mermaid
-graph TB
-MP["mobilePerf"]
-AB["appBuild"]
-CI["ciBuild"]
-OB["overseaBuild"]
-ADB["ADB Tools"]
-WALLE["Walle CLI"]
-APKT["Apktool"]
-PGYER["Pgyer API"]
-GPAPI["Google Play API"]
-MP --> ADB
-AB --> WALLE
-AB --> APKT
-CI --> PGYER
-OB --> GPAPI
+graph LR
+CF["config.py"] --> RTD["globaldata.py"]
+AD["androidDevice.py"] --> CF
+AD --> RTD
+CT["changeFile.py"] --> RTD
+CTC["csvToChart.py"] --> RTD
+CM["cpu_top.py"] --> AD
+CM --> CF
+BA["batchChannelV2.py"] --> W["Walle CLI"]
+UP["upload_pgyer.py"] --> API["Distribution API"]
+UA["upload_apks_with_listing.py"] --> GA["Google API Client"]
 ```
 
 **Diagram sources**
-- [mobilePerf/perfCode/androidDevice.py:18-120](file://mobilePerf/perfCode/androidDevice.py#L18-L120)
-- [appBuild/DaBao/batchChannelV2.py:23-78](file://appBuild/DaBao/batchChannelV2.py#L23-L78)
-- [appBuild/againBuild/changeApk.py:5-36](file://appBuild/againBuild/changeApk.py#L5-L36)
-- [ciBuild/sh_pgyer_upload.sh:1-103](file://ciBuild/sh_pgyer_upload.sh#L1-L103)
-- [overseaBuild/upload_gp/upload_apks_with_listing.py:93-197](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L93-L197)
+- [config.py:1-20](file://mobilePerf/perfCode/common/config.py#L1-L20)
+- [globaldata.py:1-14](file://mobilePerf/perfCode/globaldata.py#L1-L14)
+- [androidDevice.py:1-800](file://mobilePerf/perfCode/androidDevice.py#L1-L800)
+- [changeFile.py:1-112](file://mobilePerf/tools/changeFile.py#L1-L112)
+- [csvToChart.py:1-151](file://mobilePerf/tools/csvToChart.py#L1-L151)
+- [cpu_top.py:1-433](file://mobilePerf/perfCode/cpu_top.py#L1-L433)
+- [batchChannelV2.py:1-120](file://appBuild/DaBao/batchChannelV2.py#L1-L120)
+- [upload_pgyer.py:1-108](file://ciBuild/utils/upload_pgyer.py#L1-L108)
+- [upload_apks_with_listing.py:1-198](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L1-L198)
 
 **Section sources**
-- [README.md:24-35](file://README.md#L24-L35)
-- [mobilePerf/perfCode/androidDevice.py:18-120](file://mobilePerf/perfCode/androidDevice.py#L18-L120)
-- [appBuild/DaBao/batchChannelV2.py:23-78](file://appBuild/DaBao/batchChannelV2.py#L23-L78)
-- [ciBuild/sh_pgyer_upload.sh:1-103](file://ciBuild/sh_pgyer_upload.sh#L1-L103)
-- [overseaBuild/upload_gp/upload_apks_with_listing.py:93-197](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L93-L197)
+- [config.py:1-20](file://mobilePerf/perfCode/common/config.py#L1-L20)
+- [globaldata.py:1-14](file://mobilePerf/perfCode/globaldata.py#L1-L14)
+- [androidDevice.py:1-800](file://mobilePerf/perfCode/androidDevice.py#L1-L800)
+- [cpu_top.py:1-433](file://mobilePerf/perfCode/cpu_top.py#L1-L433)
+- [batchChannelV2.py:1-120](file://appBuild/DaBao/batchChannelV2.py#L1-L120)
+- [upload_pgyer.py:1-108](file://ciBuild/utils/upload_pgyer.py#L1-L108)
+- [upload_apks_with_listing.py:1-198](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L1-L198)
 
 ## Performance Considerations
-- Data sampling intervals and timeouts are configurable in collectors to balance accuracy and overhead
-- CSV file rotation and cleanup prevent excessive disk usage during long-running tests
-- Chart generation is decoupled from data collection to avoid blocking performance measurements
-- Device connectivity robustness includes retries and port conflict resolution for ADB
-
-[No sources needed since this section provides general guidance]
+- Data Sampling and Interval Tuning
+  - Adjust collection intervals and timeouts to balance accuracy and overhead
+- Device Compatibility
+  - Account for differences in ADB behavior across OS versions and device models
+- Visualization Efficiency
+  - Downsample and filter extreme values to improve chart readability and reduce noise
+- Network and API Limits
+  - Implement retries and backoff for upload operations to distribution APIs
 
 ## Troubleshooting Guide
-Common issues and resolutions:
-- ADB connectivity problems: Verify device connection, kill/start ADB server, resolve port conflicts
-- Missing external tools: Ensure Walle, Apktool, and Flutter are installed and accessible
-- Upload failures: Validate API keys, network connectivity, and file formats for distribution platforms
-- International deployment errors: Confirm service account credentials and release note translations
+- ADB Connectivity Issues
+  - Verify device connection and resolve port conflicts; scripts include recovery steps
+- Missing Tools or Paths
+  - Ensure ADB and platform tools are discoverable; scripts auto-detect and adapt
+- Upload Failures
+  - Confirm API keys and network connectivity; check token acquisition and polling logic
+- Store Listing Updates
+  - Validate service account credentials and language coverage for release notes
 
 **Section sources**
-- [mobilePerf/perfCode/androidDevice.py:112-176](file://mobilePerf/perfCode/androidDevice.py#L112-L176)
-- [ciBuild/sh_pgyer_upload.sh:19-32](file://ciBuild/sh_pgyer_upload.sh#L19-L32)
-- [ciBuild/utils/upload_pgyer.py:11-41](file://ciBuild/utils/upload_pgyer.py#L11-L41)
-- [overseaBuild/upload_gp/upload_apks_with_listing.py:93-146](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L93-L146)
+- [androidDevice.py:1-800](file://mobilePerf/perfCode/androidDevice.py#L1-L800)
+- [upload_pgyer.py:1-108](file://ciBuild/utils/upload_pgyer.py#L1-L108)
+- [upload_apks_with_listing.py:1-198](file://overseaBuild/upload_gp/upload_apks_with_listing.py#L1-L198)
 
 ## Conclusion
-QA Performance Code delivers a comprehensive solution for mobile performance testing, build automation, and CI/CD integration. Its modular design enables QA teams and developers to collect Android performance metrics, automate APK builds and packaging, and deploy internationally with minimal friction. By integrating with SoloPi, Pgyer, and Google Play APIs, the project accelerates quality assurance workflows and ensures consistent, repeatable results across environments.
+This project delivers a robust, extensible framework for Android performance testing and build automation, with integrated CI/CD and international distribution. Its modular design enables teams to streamline quality assurance workflows, maintain consistent performance baselines, and accelerate global releases.
+
+## Appendices
+
+### Target Audience and Use Cases
+- QA Engineers: Automate performance regression testing and reporting
+- DevOps Engineers: Integrate builds and uploads into CI/CD pipelines
+- Product Developers: Validate performance across devices and regions
+
+### System Requirements
+- Operating Systems: Windows/macOS/Linux
+- Tools: ADB, Java (for APKTool/Walle), Python 3.x, platform-specific SDKs
+- Optional: Store developer accounts and service credentials
+
+### Executive Summary for Stakeholders
+This toolkit centralizes Android performance monitoring, build customization, and global distribution into cohesive workflows. It reduces manual effort, improves consistency, and accelerates time-to-market for both domestic and international releases.
