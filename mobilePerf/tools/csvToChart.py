@@ -1,171 +1,150 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+CSV 性能数据可视化工具
+支持 FPS、CPU、MEM、TEMP 数据图表生成
+"""
 import csv
 import platform
-from matplotlib.pylab import *
 import sys
-import os
-BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-data_path = os.path.join(BASE_PATH, '/report')
+from datetime import datetime
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+# 性能指标配置
+PERF_CONFIG = {
+    'FPS': {'y_name': 'FPS(gfxinfo)', 'filter': lambda v: 0 < v <= 90, 'remove_extremes': False},
+    'CPU': {'y_name': 'CPU(%)', 'filter': lambda v: 0 < v <= 100, 'remove_extremes': True},
+    'MEM': {'y_name': 'MEM(m)', 'filter': lambda v: v > 0, 'remove_extremes': True},
+    'TEMP': {'y_name': 'Temp(℃)', 'filter': lambda v: v > 0, 'remove_extremes': True}
+}
 
 
-def csvToChart(platforms):
-    csv_path = ''
-    y_name = ' '
-    perf = ''
-    if platforms == 'win':  # windows设备
-        print('platform=Windows\n')
+def get_report_dir() -> Path:
+    """获取报告目录"""
+    return Path(__file__).parent.parent / 'report'
+
+
+def find_latest_csv(perf_dir: Path) -> Path | None:
+    """查找最新的 CSV 文件"""
+    csv_files = list(perf_dir.glob('*.csv'))
+    return max(csv_files, key=lambda p: p.stat().st_mtime) if csv_files else None
+
+
+def parse_csv(csv_path: Path, perf_type: str) -> list[int]:
+    """解析 CSV 文件，返回数据列表"""
+    if perf_type not in PERF_CONFIG:
+        raise ValueError(f"不支持的性能类型: {perf_type}")
+    
+    config = PERF_CONFIG[perf_type]
+    values = []
+    
+    with open(csv_path, 'r', encoding='gbk') as f:
+        reader = csv.reader(f)
+        next(reader, None)  # 跳过表头
+        for row in reader:
+            try:
+                val = round(float(row[1]))
+                if config['filter'](val):
+                    values.append(val)
+            except (IndexError, ValueError):
+                continue
+    
+    # 删除每隔一个元素（降采样）
+    del values[1::2]
+    
+    # 去极值
+    if config['remove_extremes'] and len(values) > 2:
+        values.remove(max(values))
+        values.remove(min(values))
+    
+    if values:
+        print(f"min: {min(values)}, max: {max(values)}, avg: {sum(values)//len(values)}")
+    
+    return values
+
+
+def create_chart(data: list[int], perf_type: str, output_path: Path) -> None:
+    """创建性能图表"""
+    config = PERF_CONFIG[perf_type]
+    
+    # 设置图表样式
+    plt.rcParams.update({
+        'figure.figsize': (8, 4),
+        'savefig.dpi': 200,
+        'figure.dpi': 100
+    })
+    
+    x = range(1, len(data) + 1)
+    plt.plot(x, data)
+    plt.xlabel('Time Consuming', color='r')
+    plt.ylabel(config['y_name'], color='r', size=16)
+    plt.title(f'APP_{perf_type}_Analysis', color='g', size=18)
+    plt.grid(True)
+    plt.savefig(output_path)
+    plt.show()
+
+
+def get_csv_path(platform_type: str) -> tuple[Path, str]:
+    """根据平台类型获取 CSV 路径和性能类型"""
+    report_dir = get_report_dir()
+    
+    if platform_type == 'win':
+        print('Platform: Windows')
         if len(sys.argv) == 3:
-            csv_path = sys.argv[1]
-            perf = sys.argv[2].upper()  # perf = re.split('\\\\', csv_path)[4]
+            return Path(sys.argv[1]), sys.argv[2].upper()
         else:
             perf = sys.argv[1].upper()
-            for i, j, csv_path in os.walk(data_path + '/{}'.format(perf)):
-                if not csv_path:
-                    print('invalid data')
-                    exit(1)
-
-            csv_path = data_path + '/{}/{}'.format(perf, csv_path[-1])  # 默认时间倒序最后一个csv文件，根据需要修改
-    elif platforms == 'mac':  # iOS设备
-        print('platform=Mac\n')
+            csv_file = find_latest_csv(report_dir / perf)
+            if not csv_file:
+                raise FileNotFoundError(f"未找到 {perf} 的 CSV 文件")
+            return csv_file, perf
+    
+    elif platform_type == 'mac':
+        print('Platform: macOS')
         if len(sys.argv) != 2:
-            print('mac need input one key, eg（cpu, mem, fps）')
-            exit(1)
+            raise ValueError("macOS 模式需要输入一个参数，如: cpu, mem, fps")
         perf = sys.argv[1].upper()
-        for i, j, csv_path in os.walk(data_path + '/{}'.format(perf)):
-            if not csv_path:
-                print('1')
-                exit(1)
-            csv_path = data_path + '/{}/{}'.format(perf, csv_path[-1])  # 默认时间倒序最后一个csv文件，根据需要修改
-
-    if not csv_path:
-        return
-    print(csv_path, perf)
-
-    now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
-    plt.rcParams['figure.figsize'] = [8.0, 4.0]  # 设置图片格式像素等
-    plt.rcParams['image.interpolation'] = 'nearest'
-    plt.rcParams['image.cmap'] = 'gray'
-    plt.rcParams['savefig.dpi'] = 200
-    plt.rcParams['figure.dpi'] = 100
-
-    title_show = 'APP_{}_Analysis'.format(perf)  # 根据APP调整展示title
-    if perf == 'FPS':
-        y_name = 'FPS(gfxinfo)'
-    elif perf == 'CPU':
-        y_name = 'CPU(%)'
-    elif perf == 'MEM':
-        y_name = 'MEM(m)'
-    elif perf == 'TEMP':
-        y_name = 'Temp(℃)'
-    y = csvToList(csv_path, perf)
-    x = range(1, len(y) + 1)
-    try:
-        if y and len(x) == len(y):
-            plt.plot(x, y)
-            plt.xlabel('Time Consuming', color='r')
-            plt.ylabel('{}'.format(y_name), color='r', size=16)
-            plt.title(title_show, color='g', size=18)
-            plt.grid(True)
-            plt.savefig(data_path + '/{}/{}.png'.format(perf, now))
-            plt.show()
-    except Exception as error:
-        print(error)
-
-
-def csvToList(csv_path, perf):
-    y = []
-    if perf == 'FPS':
-        with open(csv_path, 'r+', encoding='gbk') as file:
-            for data_list in [i for i in csv.reader(file)][1:]:
-                if round(float(data_list[1])) != 0 and round(
-                        float(data_list[1])) <= 90:
-                    # 根据gfxinfo信息计算1s内超时帧时间，计算出实际帧率（根据设备情况修改阈值，flutter=60）
-                    y.append(round(float(data_list[1])))
-            del y[1::2]
-            return y
-    elif perf == 'CPU':
-        with open(csv_path, 'r+', encoding='gbk') as file:
-            for data_list in [i for i in csv.reader(file)][1:]:
-                if round(float(data_list[1])) != 0 and round(float(data_list[1])) <= 100:  # 顶层activity所在进程的CPU占用百分比
-                    y.append(round(float(data_list[1])))
-            y.remove(max(y))
-            y.remove(min(y))
-            print('max：{}'.format(min(y)))
-            print('min：{}'.format(max(y)))
-            print('av：{}'.format(int(sum(y) / len(y))))
-            del y[1::2]
-            return y
-    elif perf == 'MEM':
-        with open(csv_path, 'r+', encoding='gbk') as file:
-            for data_list in [i for i in csv.reader(file)][1:]:  # 顶层activity所在进程的PSS（实际使用内存）
-                if round(float(data_list[1])) != 0:
-                    y.append(round(float(data_list[1])))
-            print('min：{}'.format(min(y)))
-            print('max：{}'.format(max(y)))
-            print('av：{}'.format(int(sum(y)/len(y))))
-            del y[1::2]
-            return y
-    elif perf == 'TEMP':
-        with open(csv_path, 'r+', encoding='gbk') as file:
-            for data_list in [i for i in csv.reader(file)][1:]:
-                if round(float(data_list[1])) != 0:
-                    y.append(round(float(data_list[1])))
-            print('min：{}'.format(min(y)))
-            print('max：{}'.format(max(y)))
-            print('av：{}'.format(int(sum(y)/len(y))))
-            del y[1::2]
-            return y
+        csv_file = find_latest_csv(report_dir / perf)
+        if not csv_file:
+            raise FileNotFoundError(f"未找到 {perf} 的 CSV 文件")
+        return csv_file, perf
+    
     else:
-        print('input error')
+        raise ValueError(f"不支持的平台: {platform_type}")
 
 
-def csvToList_trae(csv_path, perf):
-    # Refactored common CSV reading logic
-    y = []
-    perf_handlers = {
-        'FPS': {'y_name': 'FPS(gfxinfo)', 'filter': lambda v: 0 < v <= 90, 'remove_extremes': False},
-        'CPU': {'y_name': 'CPU(%)', 'filter': lambda v: 0 < v <= 100, 'remove_extremes': True},
-        'MEM': {'y_name': 'MEM(m)', 'filter': lambda v: v > 0, 'remove_extremes': True},
-        'TEMP': {'y_name': 'Temp(℃)', 'filter': lambda v: v > 0, 'remove_extremes': True}
-    }
-
-    if perf not in perf_handlers:
-        print('input error')
-        return y
-
-    handler = perf_handlers[perf]
-
+def main() -> int:
+    """主函数"""
     try:
-        with open(csv_path, 'r+', encoding='gbk') as file:
-            reader = csv.reader(file)
-            next(reader)  # Skip header row
-            for data_list in reader:
-                try:
-                    value = round(float(data_list[1]))
-                    if handler['filter'](value):
-                        y.append(value)
-                except (IndexError, ValueError) as e:
-                    print(f"Skipping invalid row: {data_list}, error: {e}")
-
-        # Remove every second element
-        del y[1::2]
-
-        if handler['remove_extremes'] and len(y) > 2:
-            y.remove(max(y))
-            y.remove(min(y))
-
-        # Print statistics if we have data
-        if y:
-            print(f'min：{min(y)}')
-            print(f'max：{max(y)}')
-            print(f'av：{int(sum(y) / len(y))}')
-
-        return y
-    except Exception as error:
-        print(f"Error reading CSV:: {error}")
+        # 检测平台
+        sys_platform = platform.system()
+        if sys_platform == 'Windows':
+            platform_type = 'win'
+        elif sys_platform == 'Darwin':
+            platform_type = 'mac'
+        else:
+            print(f"不支持的平台: {sys_platform}")
+            return 1
+        
+        csv_path, perf_type = get_csv_path(platform_type)
+        print(f"CSV: {csv_path}, Type: {perf_type}")
+        
+        data = parse_csv(csv_path, perf_type)
+        if not data:
+            print("无有效数据")
+            return 1
+        
+        output_path = get_report_dir() / perf_type / f"{datetime.now():%Y-%m-%d}.png"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        create_chart(data, perf_type, output_path)
+        print(f"图表已保存: {output_path}")
+        return 0
+        
+    except Exception as e:
+        print(f"错误: {e}")
+        return 1
 
 
 if __name__ == '__main__':
-    if platform.system() == 'Windows':  # win设备
-        csvToChart('win')
-    elif platform.system() == 'Darwin':  # ios 设备
-        csvToChart('mac')
+    sys.exit(main())

@@ -1,105 +1,111 @@
-import os
-import time
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+SoloPi 性能数据自动拉取工具（默认获取最新文件夹）
+"""
 import shutil
 import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
 
-BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-data_path = BASE_PATH + '/report'
-re_data_path = data_path + '/prefData'
-solopi_path = 'records/records/records'  # 自己通过solopi的路径设置
-path_list = ['/MEM', '/CPU', '/FPS', '/TEMP']
-
-
-def lsPhoneFile():
-    command = 'adb shell ls /storage/emulated/0/solopi/records/'  # solopi 地址路径
-    file_list = []
-    use_file = []
-    if not is_exist(command+solopi_path):
-        print('请检查设备USB连接 or 确保数据输出到指定文件夹\n')
-        exit(1)
-    res = subprocess.Popen(command + solopi_path,
-                           shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
-    stdout, stderr = res.communicate()
-    if res.returncode == 0:
-        print('性能采集点文件夹(时间正序排列)：\n{}'.format(stdout))
-        file_list.append(res.communicate()[0])
-        file_list = file_list[0].split('\n')
-        for i in file_list:
-            if len(i) == 29:  # 生成文件夹长度len
-                use_file.append(i)
-        print(use_file)
-        return use_file[-1]
-    elif stdout == '' and res.poll() is not None:
-        exit(1)
-    else:
-        pass
+# 配置
+SOLOPI_PATH = 'records/records/records'
+DATA_TYPES = {
+    '帧率_FPS': ('FPS', 'FPS'),
+    'PSS-main': ('MEM', 'MEM'),
+    '应用进程-main': ('CPU', 'CPU'),
+    'CPU温度_Temperature': ('TEMP', 'TEMP')
+}
 
 
-def is_exist(path):
-    """
-    判断文件或文件夹是否存在
-    :param path:
-    :return:
-    """
-    result = subprocess.Popen(path, shell=True, stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
-    if not result:
+def get_paths() -> tuple[Path, Path]:
+    """获取项目路径"""
+    base = Path(__file__).parent.parent
+    data_path = base / 'report'
+    return data_path, data_path / 'prefData'
+
+
+def run_adb(cmd: str) -> tuple[int, str, str]:
+    """执行 ADB 命令"""
+    result = subprocess.run(
+        cmd, shell=True, capture_output=True, text=True, encoding='utf-8'
+    )
+    return result.returncode, result.stdout.strip(), result.stderr.strip()
+
+
+def get_latest_folder() -> str | None:
+    """获取 SoloPi 最新的数据文件夹"""
+    cmd = f'adb shell ls /storage/emulated/0/solopi/records/{SOLOPI_PATH}'
+    rc, stdout, stderr = run_adb(cmd)
+    
+    if rc != 0:
+        print(f'请检查设备连接或 SoloPi 目录: {stderr}')
+        return None
+    
+    # 获取有效的目录名（29字符时间戳）并返回最新的
+    dirs = [d.strip() for d in stdout.split('\n') if len(d.strip()) == 29]
+    return dirs[-1] if dirs else None
+
+
+def pull_data(remote_dir: str, data_path: Path, temp_path: Path) -> bool:
+    """拉取数据到本地"""
+    # 清理旧数据
+    if temp_path.exists():
+        shutil.rmtree(temp_path)
+    
+    # 拉取
+    remote = f'/storage/emulated/0/solopi/records/{SOLOPI_PATH}/{remote_dir}'
+    rc, _, stderr = run_adb(f'adb pull {remote} {data_path}')
+    
+    if rc != 0:
+        print(f'拉取失败: {stderr}')
         return False
-    result = result.stderr.readline().decode('utf-8')
-    if 'No such file or directory' in result:
-        print('please install solopi apk\n')
-        return False
+    
+    # 重命名为临时目录
+    (data_path / remote_dir).rename(temp_path)
     return True
 
 
-def main():
-    try:
-        now_time = time.strftime('%Y%m%d%H', time.localtime(time.time()))
-        print('当前执行时间: {} \n'.format(now_time))
-        # perf_data_path = str(input('请选择复制要获取的性能采集文件夹(1=退出)：{}'.format(lsPhoneFile()[-2])))
-        file_name = lsPhoneFile()
-        print('默认获取的性能采集文件夹: {}\n'.format(file_name))
-        perf_data_path = file_name
-        if not os.path.exists(data_path):
-            os.mkdir(data_path)
-            for i in path_list:
-                if not os.path.exists(data_path + i):
-                    os.mkdir(data_path + i)
-        if os.path.exists(re_data_path):
-            shutil.rmtree(re_data_path)
-        cmd = 'adb pull /storage/emulated/0/solopi/records/{}/{} {}'.format(solopi_path, perf_data_path, data_path)
-        os.popen(cmd)
-        time.sleep(1)
-        os.rename('{}/{}'.format(data_path, perf_data_path), '{}'.format(re_data_path))
-        now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
-        file_or_dir = os.listdir(re_data_path)
-        for file_dir in file_or_dir:
-            if file_dir.startswith('帧率_FPS'):
-                shutil.move(os.path.join(re_data_path, file_dir), data_path + '/FPS' + '/FPS_{}.csv'.format(now))
-                print('FPS 执行成功')
+def organize_files(temp_path: Path, data_path: Path) -> None:
+    """整理文件到对应目录"""
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    for file in temp_path.iterdir():
+        if not file.is_file():
+            continue
+        
+        for prefix, (folder, name) in DATA_TYPES.items():
+            if file.name.startswith(prefix):
+                dest_dir = data_path / folder
+                dest_dir.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(file), str(dest_dir / f'{name}_{today}.csv'))
+                print(f'{folder} 数据已保存')
+                break
 
-            elif file_dir.startswith('PSS-main'):
-                shutil.move(os.path.join(re_data_path, file_dir), data_path + '/MEM' + '/MEM_{}.csv'.format(now))
-                print('MEM 执行成功')
 
-            elif file_dir.startswith('应用进程-main'):
-                shutil.move(os.path.join(re_data_path, file_dir), data_path + '/CPU' + '/CPU_{}.csv'.format(now))
-                print('CPU 执行成功')
-
-            elif file_dir.startswith('CPU温度_Temperature'):
-                shutil.move(os.path.join(re_data_path, file_dir), data_path + '/TEMP' + '/TEMP_{}.csv'.format(now))
-                print('TEMP 执行成功')
-            else:
-                pass
-
-        print('执行成功，请查看本地路径下文件 {}'.format(data_path))
-    except EOFError as error:
-        print('输入异常', error)
-        exit(1)
-    except Exception as error:
-        print(error)
-        exit(1)
+def main() -> int:
+    print(f'当前时间: {datetime.now():%Y-%m-%d %H:%M}\n')
+    
+    # 获取最新文件夹
+    latest = get_latest_folder()
+    if not latest:
+        print('未找到数据文件夹')
+        return 1
+    
+    print(f'自动获取最新文件夹: {latest}\n')
+    
+    # 拉取和整理
+    data_path, temp_path = get_paths()
+    
+    if not pull_data(latest, data_path, temp_path):
+        return 1
+    
+    organize_files(temp_path, data_path)
+    
+    print(f'\n完成！数据保存在: {data_path}')
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
