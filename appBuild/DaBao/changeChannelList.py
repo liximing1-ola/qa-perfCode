@@ -1,60 +1,90 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+渠道包批量打包工具
+Usage: python changeChannelList.py <apkPath> <apkName> <appVersion> <CPU>
+"""
 import sys
 import os
-import time
-from nt import chdir
+import subprocess
+from datetime import datetime
+from pathlib import Path
 
-now = time.strftime('%Y-%m-%d', time.localtime(time.time()))
-if len(sys.argv) != 5:
-    print('-----------INPUT[apkPath][apkName][appVersion][CPU]-----------')
-    quit(0)
-apk_file_name = sys.argv[1]
-app_name = sys.argv[2]
-app_version = sys.argv[3]
-app_so = sys.argv[4]
-output_path = 'D:/Build/{}_{}_{}_{}'.format(app_name, app_version, app_so, now)
+WALLE_JAR = "walle-cli-all.jar"
 
-
-# 出主渠道包
-def process_one_conf(channel_list):
-    # 本地路径
-    if os.path.exists(output_path):
-        print('existed')
-    else:
-        os.makedirs(output_path)
-    for channel_name in channel_list:
-        cmd = 'java -jar walle-cli-all.jar batch -c ' + channel_name + ' ' + apk_file_name + ' ' + output_path
-        os.system(cmd)
-    change_name(output_path)
-    app_list = os.listdir(output_path)
-    print(app_list)
-    print('--------------BuildSuccess，ApkPath==[ {} ]--------------'.format(output_path))
+# 渠道配置
+CHANNEL_CONFIG = {
+    'slp': ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb', 'baidu'],
+    'rbp': ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb']
+}
+DEFAULT_CHANNELS = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb', 'rongyao']
 
 
-def change_name(path):
-    os.chdir(path)
-    app_list = os.listdir(path)
-    for app in app_list:
-        if app.endswith('.apk'):
-            apk_name = app[:-4]
-            apk_name_1 = apk_name.split('-')
-            channel_name = apk_name_1[-1].split('_')[1]
-            app_name_2 = apk_name_1[0] + '-' + channel_name + '-release' + '-{}'.format(app_so)
-            os.rename(apk_name + '.apk', app_name_2 + '.apk')
-        else:
-            print('Not OK')
+def get_channels(app_name: str) -> list:
+    """根据应用名称获取渠道列表"""
+    for prefix, channels in CHANNEL_CONFIG.items():
+        if app_name.startswith(prefix):
+            return channels
+    return DEFAULT_CHANNELS
 
 
-def appBuild():
-    if app_name.startswith('slp'):
-        channel = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb', 'baidu']
-        process_one_conf(channel)
-    elif app_name.startswith('rbp'):
-        channel = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb']
-        process_one_conf(channel)
-    else:
-        channel_names = ['gw', 'oppo', 'vivo', 'huawei', 'xiaomi', 'yyb', 'rongyao']
-        process_one_conf(channel_names)
+def rename_apk(path: str, app_so: str) -> None:
+    """重命名 APK 文件"""
+    for app in os.listdir(path):
+        if not app.endswith('.apk'):
+            continue
+        
+        # 解析文件名: appName_v1.0_channel_release.apk
+        parts = app[:-4].split('-')
+        if len(parts) < 2:
+            continue
+        
+        channel = parts[-1].split('_')[1] if '_' in parts[-1] else parts[-1]
+        new_name = f"{parts[0]}-{channel}-release-{app_so}.apk"
+        
+        old_path = Path(path) / app
+        new_path = Path(path) / new_name
+        old_path.rename(new_path)
+
+
+def build_channels(apk_file: str, channels: list, output_path: str) -> int:
+    """批量打包渠道包"""
+    Path(output_path).mkdir(parents=True, exist_ok=True)
+    
+    for channel in channels:
+        cmd = ["java", "-jar", WALLE_JAR, "batch", "-c", channel, apk_file, output_path]
+        ret = subprocess.call(cmd)
+        if ret != 0:
+            print(f"打包失败: {channel}")
+            return ret
+    
+    return 0
+
+
+def main() -> int:
+    if len(sys.argv) != 5:
+        print(__doc__)
+        return 1
+
+    apk_file, app_name, app_version, app_so = sys.argv[1:5]
+    today = datetime.now().strftime('%Y-%m-%d')
+    output_path = f'D:/Build/{app_name}_{app_version}_{app_so}_{today}'
+
+    channels = get_channels(app_name)
+    
+    print(f"开始打包: {app_name}")
+    print(f"渠道列表: {channels}")
+    
+    ret = build_channels(apk_file, channels, output_path)
+    if ret != 0:
+        return ret
+
+    rename_apk(output_path, app_so)
+    
+    print(f"\n打包完成: {output_path}")
+    print(f"生成文件: {os.listdir(output_path)}")
+    return 0
 
 
 if __name__ == '__main__':
-    appBuild()
+    sys.exit(main())

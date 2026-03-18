@@ -10,18 +10,24 @@ def getPackageName():
     """
     try:
         dev = getDev()
-        cmd = 'adb -s {} shell dumpsys window w |findstr \/ |findstr name='.format(dev)
+        if not dev:  # Check if device is available
+            return '未找到有效设备'
+
+        cmd = f'adb -s {dev} shell dumpsys window w | findstr / | findstr name='
         context = os.popen(cmd)
         data = context.readlines()
-        if 'com.imbb.banban.android.MainActivity' in data[0] and len(data) >= 1:
-            r = re.compile(r'[(](.*?)[/]', re.S)
-            return (re.findall(r, data[0]))[0][5:]
-        elif len(data) >= 4 and 'com.imbb.banban.android.MainActivity' in data[3]:
-            r = re.compile(r'[(](.*?)[/]', re.S)
-            return (re.findall(r, data[3]))[0][5:]
-        elif len(data) >= 6 and 'com.imbb.banban.android.MainActivity' in data[5]:
-            r = re.compile(r'[(](.*?)[/]', re.S)
-            return (re.findall(r, data[5]))[0][13:]
+
+        # Simplified package name extraction with loop
+        target_activity = 'com.x.x.android.MainActivity'
+        pattern = re.compile(r'\((.*?)/', re.S)  # Reusable regex pattern
+
+        for line in data:
+            if target_activity in line:
+                match = pattern.search(line)
+                if match:
+                    # Extract package name (handles different offsets with split)
+                    return match.group(1).split()[-1]
+
         return '取不到包名,请先启动应用or重启应用'
     except EnvironmentError as error:
         print('请用USB连接设备', error)
@@ -34,44 +40,53 @@ def getDev():
     :return: 获得设备id
     """
     try:
-        devices_info = os.popen('adb devices')
-        data = devices_info.readlines()
-        if len(data) != 0 and data[1].find('device'):
-            s = data[1][:-8]
-            return s
-        return 0
+        # Use regex for reliable device ID extraction
+        result = os.popen('adb devices').read()
+        match = re.search(r'^(\S+)\s+device$', result, re.MULTILINE)
+        if match:
+            return match.group(1)  # Return first connected device
+        return None  # No valid device found
     except Exception as error:
-        print(error)
+        print(f"获取设备ID失败: {error}")
+        return None
 
 
 def Fps():
-    print('当前设备id: {}'.format(getDev()))
+    device_id = getDev()
+    if not device_id:
+        print("未找到连接的设备,无法执行操作")
+        return
+
+    print(f'当前设备id: {device_id}')
     i = 1
+    # Define swipe sequences as constants
+    SWIPE_SEQ1 = [
+        'input swipe 100 550 100 100 50',
+        'input swipe 200 600 200 200 100',
+        'input swipe 500 500 200 200 100'
+    ]
+    SWIPE_SEQ2 = [
+        'input swipe 400 250 360 100 150',
+        'input swipe 500 720 400 500 150'
+    ]
+
     while i <= 2000:
-        r = random.randint(1, 2)
-        if r == 1:
-            m = 1
-            while m <= 20:
-                swipe_list = ['adb shell input swipe 100 550 100 100 50',
-                              'adb shell input swipe 200 600 200 200 100',
-                              'adb shell input swipe 500 500 200 200 100']
-                s = random.choice(swipe_list)
-                os.system(s)
-                m += 1
-                i += 1
-                print('{}: {}, m={}, i={}'.format(getDev(), s, m, i))
-                time.sleep(0.05)
-        elif r == 2:
-            n = 1
-            while n <= 20:
-                swipe_list = ['adb shell input swipe 400 250 360 100 150',
-                              'adb shell input swipe 500 720 400 500 150']
-                s = random.choice(swipe_list)
-                os.system(s)
-                n += 1
-                i += 1
-                print('{}: {}, n={}, i={}'.format(getDev(), s, n, i))
-                time.sleep(0.05)
+        # Randomly choose sequence and execute swipes
+        if random.randint(1, 2) == 1:
+            swipe_list = SWIPE_SEQ1
+        else:
+            swipe_list = SWIPE_SEQ2
+
+        # Execute up to 20 swipes with loop control
+        for _ in range(20):
+            if i > 2000:
+                break
+            s = random.choice(swipe_list)
+            adb_cmd = f'adb -s {device_id} shell {s}'
+            os.system(adb_cmd)
+            i += 1
+            print(f'{device_id}: {adb_cmd}, i={i}')
+            time.sleep(0.05)
 
 
 if __name__ == '__main__':

@@ -1,97 +1,119 @@
-#!/usr/local/bin/python3
-# coding:utf-8
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Walle 渠道包打包工具
 
-# Show channel
-# Usage: python batchChannelV2.py show xx.apk
-
-# Single channel
-# Usage: python batchChannelV2.py xx.apk channel_name
-
-# Batch channels
-# Usage: python batchChannelV2.py xx.apk channel_name1,channel_name2,channel_name3
-
-# Batch channels by seq
-# Usage: python batchChannelV2.py xx.apk channel_name 1 10
-
-# Batch config in a file
-# Usage: python batchChannelV2.py xx.apk -f test.conf
-
+Usage:
+  显示渠道: python batchChannelV2.py show <apk>
+  单个渠道: python batchChannelV2.py <apk> <channel>
+  多个渠道: python batchChannelV2.py <apk> <ch1,ch2,ch3>
+  序号批量: python batchChannelV2.py <apk> <channel_prefix> <start> <end>
+  配置文件: python batchChannelV2.py <apk> -f <config_file>
+"""
 import sys
 import os
+import subprocess
+from pathlib import Path
+
+WALLE_JAR = "walle-cli-all.jar"
 
 
-def process_one_conf(working_dir):
-    # show channel
-    if len(sys.argv) == 3:
-        if sys.argv[1] == 'show':
-            apk_file_name = sys.argv[2]
-            os.system('java -jar walle-cli-all.jar show ' + apk_file_name)
-            exit(0)
+def run_walle(*args) -> int:
+    """执行 walle 命令"""
+    cmd = ["java", "-jar", WALLE_JAR] + list(args)
+    return subprocess.call(cmd)
 
-    # get arguments from command line
-    apk_file_name = sys.argv[1]
-    channel_name = sys.argv[2]
 
-    start_channel_seq = None
-    end_channel_seq = None
+def show_channel(apk_file: str) -> int:
+    """显示 APK 渠道信息"""
+    return run_walle("show", apk_file)
 
-    has_seq = len(sys.argv) >= 5
-    if has_seq:
-        start_channel_seq = int(sys.argv[3])
-        end_channel_seq = int(sys.argv[4])
 
-    # get single channel name or batch channel names if with start and end seq arguments
-    channel_names = []
-    if not has_seq:
-        channel_names.extend(channel_name.split(','))
-    else:
-        max_seq_len = len(str(end_channel_seq))
-        for i in range(start_channel_seq, end_channel_seq + 1):
-            format_str = '{:0>' + str(max_seq_len) + 'd}'
-            seq_postfix = format_str.format(i)
-            # seq_postfix = str(i)
-            channel_names.append(channel_name + seq_postfix)
+def generate_channel_names(channel_arg: str, seq_args: list = None) -> list:
+    """生成渠道名称列表"""
+    if not seq_args:
+        return channel_arg.split(',')
+    
+    start, end = int(seq_args[0]), int(seq_args[1])
+    width = len(str(end))
+    return [f"{channel_arg}{i:0{width}d}" for i in range(start, end + 1)]
 
-    # build channel apk and rename
-    for single_channel_name in channel_names:
-        channel_names_batch = [single_channel_name]
-        # all processed by batch_mode
-        channel_names_str = ','.join(channel_names_batch)
-        output_path = working_dir
-        os.chdir(working_dir)
-        cmd = 'java -jar walle-cli-all.jar batch -c ' + channel_names_str + ' ' + apk_file_name
-        # print('cmd is:\n' + cmd)
-        os.system(cmd)
 
-        # rename apk files
-        apk_name = apk_file_name[:-4]
+def rename_apk(apk_name: str, channel: str) -> None:
+    """重命名生成的 APK 文件"""
+    # 解析文件名: appName_channelName-version.apk -> appName-channelName-version.apk
+    old_name = f"{apk_name}_{channel}.apk"
+    parts = old_name.split('-')
+    if len(parts) >= 2:
+        parts[1] = channel
+        parts[-1] = parts[-1].split('_')[0]
+        new_name = '-'.join(parts)
+        if Path(old_name).exists():
+            os.rename(old_name, new_name)
 
-        os.chdir(output_path)  # switch to output dir
-        for c_name in channel_names_batch:
-            generated_apk_file_name = apk_name + '_' + c_name
-            name_segments = generated_apk_file_name.split('-')
-            name_segments[1] = c_name
-            name_segments[-1] = name_segments[-1].split('_')[0]
-            final_apk_file_name = '-'.join(name_segments)
-            # os.rename(generated_apk_file_name + '.apk', final_apk_file_name + '.apk')
-            os.system('move ' + generated_apk_file_name + '.apk ' + final_apk_file_name + '.apk')
+
+def process_channels(apk_file: str, channel_arg: str, seq_args: list = None) -> int:
+    """处理渠道包打包"""
+    channel_names = generate_channel_names(channel_arg, seq_args)
+    apk_name = Path(apk_file).stem
+    
+    for channel in channel_names:
+        # 打包
+        ret = run_walle("batch", "-c", channel, apk_file)
+        if ret != 0:
+            print(f"打包失败: {channel}")
+            return ret
+        # 重命名
+        rename_apk(apk_name, channel)
+    
+    return 0
+
+
+def process_config_file(apk_file: str, config_file: str) -> int:
+    """从配置文件读取渠道列表"""
+    try:
+        with open(config_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                args = line.split()
+                if len(args) >= 1:
+                    ret = process_channels(apk_file, args[0], args[1:3])
+                    if ret != 0:
+                        return ret
+        return 0
+    except FileNotFoundError:
+        print(f"配置文件不存在: {config_file}")
+        return 1
+
+
+def main() -> int:
+    if len(sys.argv) < 2:
+        print(__doc__)
+        return 1
+
+    # 显示渠道模式
+    if sys.argv[1] == 'show' and len(sys.argv) >= 3:
+        return show_channel(sys.argv[2])
+
+    if len(sys.argv) < 3:
+        print(__doc__)
+        return 1
+
+    apk_file, channel_arg = sys.argv[1], sys.argv[2]
+
+    # 配置文件模式
+    if channel_arg == '-f' and len(sys.argv) >= 4:
+        return process_config_file(apk_file, sys.argv[3])
+
+    # 序号批量模式
+    if len(sys.argv) >= 5:
+        return process_channels(apk_file, channel_arg, sys.argv[3:5])
+
+    # 单渠道或多渠道模式
+    return process_channels(apk_file, channel_arg)
 
 
 if __name__ == '__main__':
-    conf_file = ''
-    working_dir = os.getcwd()
-    if len(sys.argv) >= 3 and sys.argv[2] == '-f':
-        conf_file = sys.argv[3]
-        with open(conf_file) as f:
-            lines = f.readlines()
-            for line in lines:
-                if line.startswith('#'):
-                    continue
-                line_args = line.split()
-                tmp_args = sys.argv[:2]
-                tmp_args.extend(line_args)
-                sys.argv = tmp_args
-                print('process_one_conf args: ' + ' '.join(sys.argv))
-                process_one_conf(working_dir)
-    else:
-        process_one_conf(working_dir)
+    sys.exit(main())

@@ -1,178 +1,71 @@
+#!/usr/bin/env python3
 import os
 import shutil
 import sys
 
+REQUIRED_FILES = {'72.png', '96.png', '144.png', '192.png', '432.png',
+                  '512.png', '1080.png', '1080.webp', 'login_btn.png', 'logo.png'}
 
-def changeRes():
+
+def check_resources(res_name_path: str) -> None:
+    """检查资源文件是否完整"""
+    actual_files = set(os.listdir(res_name_path))
+    if actual_files == REQUIRED_FILES:
+        return
+    
+    missing = REQUIRED_FILES - actual_files
+    extra = actual_files - REQUIRED_FILES
+    errors = []
+    if missing:
+        errors.append(f"缺少文件: {', '.join(missing)}")
+    if extra:
+        errors.append(f"多余文件: {', '.join(extra)}")
+    raise EnvironmentError('; '.join(errors))
+
+
+def copy_resource(src_dir: str, dst_dir: str, src_name: str, dst_name: str) -> None:
+    """复制单个资源文件"""
+    os.makedirs(dst_dir, exist_ok=True)
+    shutil.copy2(os.path.join(src_dir, src_name), os.path.join(dst_dir, dst_name))
+    print(f"Copied: {src_name} -> {dst_dir}/{dst_name}")
+
+
+def main() -> int:
     if len(sys.argv) != 3:
-        print('--------please input two path--------')
-        exit(0)
-    # 解压包路径
-    res_path = sys.argv[1]
-    # 新资源路径
-    res_name_path = sys.argv[2]
-    # 解压包res下路径
-    pkg_res_path = res_path + '/res'
-    # 解压包下assets下路径
-    base_logo_path = res_path + '/assets/flutter_assets/assets/module/bbcore'
-    # 一键登录地址
-    base_webp_path = res_path + '/assets/flutter_assets/assets\module\login'
-    # 检查图片地址
-    checkIconPath(res_name_path)
-    # 替换资源
-    new_res_path_72 = res_name_path + '/72.png'
-    new_res_path_96 = res_name_path + '/96.png'
-    new_res_path_144 = res_name_path + '/144.png'
-    new_res_path_192 = res_name_path + '/192.png'
-    # 新增432icon,处理原生安卓8以上桌面icon问题
-    new_res_path_432 = res_name_path + '/432.png'
-    new_res_path_512 = res_name_path + '/512.png'
-    new_res_path_1080 = res_name_path + '/1080.png'
-    # 新增webp文件。处理闪屏
-    # https://squoosh.app/
-    new_res_path_webp = res_name_path + '/1080.webp'
-    # 新增login_btn和logo.png 处理一键登录页面
-    new_res_path_logo = res_name_path + '/logo.png'
-    new_res_path_login_btn = res_name_path + '/login_btn.png'
+        print('Usage: python changeRes.py <res_path> <res_name_path>')
+        return 1
 
-    # 替换路径
-    res_path_hdpi_72 = pkg_res_path + '/mipmap-hdpi'
-    res_path_xhdpi_96 = pkg_res_path + '/mipmap-xhdpi'
-    res_path_xxhdpi_144 = pkg_res_path + '/mipmap-xxhdpi'
-    res_path_xxxhdpi_192 = pkg_res_path + '/mipmap-xxxhdpi'
-    res_path_xxhdpi_splash = pkg_res_path + '/mipmap-xxhdpi'
-    res_path_drawable_512 = pkg_res_path + '/drawable'
+    res_path, res_name_path = sys.argv[1], sys.argv[2]
+    pkg_res = os.path.join(res_path, 'res')
+    module = os.path.join(res_path, 'assets', 'flutter_assets', 'assets', 'module')
 
-    res_path_list = {
-        new_res_path_72: res_path_hdpi_72,
-        new_res_path_96: res_path_xhdpi_96,
-        new_res_path_144: res_path_xxhdpi_144,
-        new_res_path_192: res_path_xxxhdpi_192,
-        new_res_path_1080: res_path_xxhdpi_splash,
-    }
+    check_resources(res_name_path)
 
-    for k, v in res_path_list.items():
-        if not os.path.exists(k):
-            print('path error！')
-        if not os.path.exists(v):
-            print('path error！')
+    # 资源映射: (源文件名, 目标目录, 目标文件名)
+    resources = [
+        ('72.png', f'{pkg_res}/mipmap-hdpi', 'ic_launcher.png'),
+        ('96.png', f'{pkg_res}/mipmap-xhdpi', 'ic_launcher.png'),
+        ('144.png', f'{pkg_res}/mipmap-xxhdpi', 'ic_launcher.png'),
+        ('192.png', f'{pkg_res}/mipmap-xxxhdpi', 'ic_launcher.png'),
+        ('1080.png', f'{pkg_res}/mipmap-xxhdpi', 'splash.png'),
+        ('512.png', f'{pkg_res}/drawable', 'ic_launcher.png'),
+        ('144.png', f'{module}/bbcore', 'logo.png'),
+        ('432.png', f'{pkg_res}/drawable', 'ic_launcher_foreground.png'),
+        ('432.png', f'{pkg_res}/mipmap-xxxhdpi', 'ic_launcher_foreground.png'),
+        ('1080.webp', f'{module}/login', 'login_splash.webp'),
+        ('logo.png', f'{pkg_res}/drawable', 'logo.png'),
+        ('login_btn.png', f'{pkg_res}/drawable', 'login_btn.png'),
+    ]
 
     try:
-        shutil.copy(new_res_path_72, res_path_hdpi_72)
-        shutil.move(res_path_hdpi_72 + '/72.png', res_path_hdpi_72 + '/ic_launcher.png')
-    except Exception as error:
-        print(error)
-    else:
-        print('mipmap-hdpi: 72px  success')
+        for src_name, dst_dir, dst_name in resources:
+            copy_resource(res_name_path, dst_dir, src_name, dst_name)
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
 
-    try:
-        shutil.copy(new_res_path_96, res_path_xhdpi_96)
-        shutil.move(res_path_xhdpi_96 + '/96.png', res_path_xhdpi_96 + '/ic_launcher.png')
-    except Exception as error:
-        print(error)
-    else:
-        print('mipmap-xhdpi: 96px success')
-
-    try:
-        shutil.copy(new_res_path_144, res_path_xxhdpi_144)
-        shutil.move(res_path_xxhdpi_144 + '/144.png', res_path_xxhdpi_144 + '/ic_launcher.png')
-    except Exception as error:
-        print(error)
-    else:
-        print('mipmap-xxhdpi: 144px success')
-
-    try:
-        shutil.copy(new_res_path_192, res_path_xxxhdpi_192)
-        shutil.move(res_path_xxxhdpi_192 + '/192.png', res_path_xxxhdpi_192 + '/ic_launcher.png')
-    except Exception as error:
-        print(error)
-    else:
-        print('mipmap-xxxhdpi: 192px success')
-
-    try:
-        shutil.copy(new_res_path_1080, res_path_xxhdpi_splash)
-        shutil.move(res_path_xxhdpi_splash + '/1080.png', res_path_xxhdpi_splash + '/splash.png')
-    except Exception as error:
-        print(error)
-    else:
-        print('mipmap-xxhdpi: 1080px  success')
-
-    if not os.path.exists(res_path_drawable_512):
-        print('res_path_drawable_512 path error！')
-    try:
-        shutil.copy(new_res_path_512, res_path_drawable_512)
-        shutil.move(res_path_drawable_512 + '/512.png', res_path_drawable_512 + '/ic_launcher.png')
-    except Exception as error:
-        print(error)
-    else:
-        print('drawable: 512px success')
-
-    if not os.path.exists(base_logo_path):
-        print('base_logo_path path error！')
-    try:
-        shutil.copy(new_res_path_144, base_logo_path)
-        shutil.move(base_logo_path + '/144.png', base_logo_path + '/logo.png')
-    except Exception as error:
-        print(error)
-    else:
-        print('banban_base: 144px success')
-
-    # 11.1新增处理ic_launcher_foreground.png
-    try:
-        shutil.copy(new_res_path_432, res_path_drawable_512)
-        shutil.move(res_path_drawable_512 + '/432.png', res_path_drawable_512 + '/ic_launcher_foreground.png')
-    except Exception as error:
-        print(error)
-    else:
-        print('drawable ic_launcher_foreground: 432px success')
-
-    # 2020-7.22新增处理ic_launcher_foreground.png放在mipmap-xxxhdpi中
-    try:
-        shutil.copy(new_res_path_432, res_path_xxxhdpi_192)
-        shutil.move(res_path_xxxhdpi_192 + '/432.png', res_path_xxxhdpi_192 + '/ic_launcher_foreground.png')
-    except Exception as error:
-        print(error)
-    else:
-        print('xxxhdpi ic_launcher_foreground: 432px success')
-
-    # 2020-7.23 新增处理一键登录默认icon
-    try:
-        shutil.copy(new_res_path_webp, base_webp_path)
-        shutil.move(base_webp_path + '/1080.webp', base_webp_path + '/login_splash.webp')
-    except Exception as error:
-        print(error)
-    else:
-        print('一键登录:1080.webp success')
-
-    try:
-        shutil.copy(new_res_path_logo, res_path_drawable_512)
-        shutil.move(res_path_drawable_512 + '/logo.png', res_path_drawable_512 + '/logo.png')
-    except Exception as error:
-        print(error)
-    else:
-        print('一键登录:logo.png success')
-
-    try:
-        shutil.copy(new_res_path_login_btn, res_path_drawable_512)
-        shutil.move(res_path_drawable_512 + '/login_btn.png', res_path_drawable_512 + '/login_btn.png')
-    except Exception as error:
-        print(error)
-    else:
-        print('一键登录:login_btn.png success')
-
-
-def checkIconPath(p_path):
-    p_list = ['72.png', '96.png', '144.png', '192.png', '432.png', '512.png', '1080.png', '1080.webp', 'login_btn.png',
-              'logo.png']
-    for p in os.listdir(p_path):
-        if p not in p_list:
-            raise EnvironmentError('{}--name is wrong'.format(p))
-        elif len(os.listdir(p_path)) != 10:
-            raise EnvironmentError('env error')
-    return True
+    return 0
 
 
 if __name__ == '__main__':
-    # python changeResOld.py 解压包地址 资源地址
-    # 修改背景色值
-    changeRes()
+    sys.exit(main())

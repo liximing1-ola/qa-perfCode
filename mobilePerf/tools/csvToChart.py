@@ -1,9 +1,10 @@
 import csv
 import platform
 from matplotlib.pylab import *
+import sys
 import os
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-data_path = BASE_PATH + '/report'
+data_path = os.path.join(BASE_PATH, '/report')
 
 
 def csvToChart(platforms):
@@ -18,9 +19,10 @@ def csvToChart(platforms):
         else:
             perf = sys.argv[1].upper()
             for i, j, csv_path in os.walk(data_path + '/{}'.format(perf)):
-                if len(csv_path) == 0:
+                if not csv_path:
                     print('invalid data')
                     exit(1)
+
             csv_path = data_path + '/{}/{}'.format(perf, csv_path[-1])  # 默认时间倒序最后一个csv文件，根据需要修改
     elif platforms == 'mac':  # iOS设备
         print('platform=Mac\n')
@@ -29,8 +31,8 @@ def csvToChart(platforms):
             exit(1)
         perf = sys.argv[1].upper()
         for i, j, csv_path in os.walk(data_path + '/{}'.format(perf)):
-            if len(csv_path) == 0:
-                print('')
+            if not csv_path:
+                print('1')
                 exit(1)
             csv_path = data_path + '/{}/{}'.format(perf, csv_path[-1])  # 默认时间倒序最后一个csv文件，根据需要修改
 
@@ -114,6 +116,52 @@ def csvToList(csv_path, perf):
             return y
     else:
         print('input error')
+
+
+def csvToList_trae(csv_path, perf):
+    # Refactored common CSV reading logic
+    y = []
+    perf_handlers = {
+        'FPS': {'y_name': 'FPS(gfxinfo)', 'filter': lambda v: 0 < v <= 90, 'remove_extremes': False},
+        'CPU': {'y_name': 'CPU(%)', 'filter': lambda v: 0 < v <= 100, 'remove_extremes': True},
+        'MEM': {'y_name': 'MEM(m)', 'filter': lambda v: v > 0, 'remove_extremes': True},
+        'TEMP': {'y_name': 'Temp(℃)', 'filter': lambda v: v > 0, 'remove_extremes': True}
+    }
+
+    if perf not in perf_handlers:
+        print('input error')
+        return y
+
+    handler = perf_handlers[perf]
+
+    try:
+        with open(csv_path, 'r+', encoding='gbk') as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip header row
+            for data_list in reader:
+                try:
+                    value = round(float(data_list[1]))
+                    if handler['filter'](value):
+                        y.append(value)
+                except (IndexError, ValueError) as e:
+                    print(f"Skipping invalid row: {data_list}, error: {e}")
+
+        # Remove every second element
+        del y[1::2]
+
+        if handler['remove_extremes'] and len(y) > 2:
+            y.remove(max(y))
+            y.remove(min(y))
+
+        # Print statistics if we have data
+        if y:
+            print(f'min：{min(y)}')
+            print(f'max：{max(y)}')
+            print(f'av：{int(sum(y) / len(y))}')
+
+        return y
+    except Exception as error:
+        print(f"Error reading CSV:: {error}")
 
 
 if __name__ == '__main__':
