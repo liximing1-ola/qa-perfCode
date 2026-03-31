@@ -1,178 +1,212 @@
-﻿# -*- coding: utf-8 -*-
-import re
+﻿#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+ADB 设备管理模块
+提供 Android 设备的 ADB 连接、命令执行、日志收集等功能
+"""
 import os
-import time
-import threading
+import platform
+import re
 import subprocess
 import sys
-import platform
+import threading
+import time
 import traceback
+from pathlib import Path
 
 BaseDir = os.path.dirname(__file__)
 sys.path.append(os.path.join(BaseDir, '../..'))
 from mobilePerf.perfCode.common.log import logger
-from mobilePerf.perfCode.common.utils import TimeUtils, FileUtils
+from mobilePerf.perfCode.common.utils import TimeUtils
 from mobilePerf.perfCode.globaldata import RuntimeData
 
 
-class ADB(object):
-    os_name = None
-    adb_path = None
+class ADB:
+    """ADB 工具类"""
+    _os_name: str | None = None
+    _adb_path: str | None = None
+    _device_pattern = re.compile(r'^(\S+)\tdevice$')
 
-    def __init__(self, device_id=None):
-        self._logcat_running = None
-        self._adb_path = ADB.get_adb_path()  # adb.exe程序的绝对路径
-        self._device_id = device_id  # 设备id adb serialNum  #
-        self._logcat_handle = []  # logcat记录
-        self._system_version = None
-        self._sdk_version = None
-        self._phone_brand = None
-        self._phone_model = None
-        self._os_name = None
+    def __init__(self, device_id: str | None = None):
+        self._device_id = device_id
+        self._adb_path = self.get_adb_path()
+        self._logcat_handle: list = []
+        self._logcat_running = False
+        self._log_pipe = None
+        self._system_version: str | None = None
+        self._sdk_version: int | None = None
+        self._phone_brand: str | None = None
+        self._phone_model: str | None = None
         self.before_connect = True
         self.after_connect = True
 
     @property
-    def DEVICEID(self):
+    def device_id(self) -> str | None:
+        """设备 ID"""
         return self._device_id
 
     @staticmethod
-    def get_adb_path():
-        """
-        返回adb的绝对路径，默认使用指定adb路径，若环境变量未指定 ，则返回当前脚本目录下的路径
-        :return: 返回adb.exe的绝对路径
-        :rtype: str
-        """
-        if ADB.adb_path:
-            return ADB.adb_path
-        ADB.adb_path = os.environ.get('ADB_PATH')
-        if ADB.adb_path is not None and ADB.adb_path.endswith('adb.exe'):
-            return ADB.adb_path
-        # 判断系统默认adb是否可用，如果系统有配，默认优先用系统的，避免5037端口冲突
-        proc = subprocess.Popen('adb devices', stdout=subprocess.PIPE, shell=True)
-        result = proc.stdout.read()
-        logger.debug(result)
-        if not isinstance(result, str):
-            result = str(result, 'utf-8')  # 说明自带adb  windows上返回结果不是这样 另外有可能第一次执行，adb会不正常
-        if result and "command not found" not in result:
-            ADB.adb_path = "adb"
-            logger.debug("system have adb")
-            return ADB.adb_path
-        logger.debug("system don't have adb")
-        cur_path = os.path.dirname(os.path.abspath(__file__))
-        ADB.os_name = platform.system()
-        logger.debug("Platform :" + ADB.os_name)
-        if ADB.os_name == "Windows":
-            ADB.adb_path = os.path.join(cur_path, u'adb.exe')  #
-        elif ADB.os_name == "Darwin":
-            ADB.adb_path = os.path.join(cur_path, "platform-tools-latest-darwin", "platform-tools", "adb")
+    def get_adb_path() -> str:
+        """获取 ADB 可执行文件路径"""
+        if ADB._adb_path:
+            return ADB._adb_path
+
+        # 1. 检查环境变量
+        env_path = os.environ.get('ADB_PATH')
+        if env_path and env_path.endswith('adb.exe'):
+            ADB._adb_path = env_path
+            return ADB._adb_path
+
+        # 2. 检查系统 adb
+        try:
+            result = subprocess.run(
+                ['adb', 'devices'], 
+                capture_output=True, 
+                text=True, 
+                timeout=5
+            )
+            if result.returncode == 0 and "command not found" not in result.stdout:
+                ADB._adb_path = "adb"
+                logger.debug("Using system adb")
+                return ADB._adb_path
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+
+        # 3. 使用内置 adb
+        logger.debug("Using bundled adb")
+        cur_path = Path(__file__).parent
+        ADB._os_name = platform.system()
+        
+        if ADB._os_name == "Windows":
+            ADB._adb_path = str(cur_path / "adb.exe")
+        elif ADB._os_name == "Darwin":
+            ADB._adb_path = str(cur_path / "platform-tools-latest-darwin" / "platform-tools" / "adb")
         else:
-            ADB.adb_path = os.path.join(cur_path, "platform-tools-latest-linux", "platform-tools", "adb")
-        return ADB.adb_path
+            ADB._adb_path = str(cur_path / "platform-tools-latest-linux" / "platform-tools" / "adb")
+        
+        return ADB._adb_path
 
     @staticmethod
-    def get_os_name():
-        if ADB.os_name:  # adb名称
-            return ADB.os_name
-        ADB.os_name = platform.system()
-        return ADB.os_name
+    def get_os_name() -> str:
+        """获取操作系统名称"""
+        if ADB._os_name is None:
+            ADB._os_name = platform.system()
+        return ADB._os_name
 
     @staticmethod
-    def is_connected(device_id):
-        """
-        检查设备是否连接
-        """
-        if device_id in ADB.list_device():
-            return True
-        else:
-            return False
+    def list_devices() -> list[str]:
+        """获取已连接的设备列表"""
+        try:
+            result = subprocess.run(
+                ['adb', 'devices'],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode != 0:
+                return []
+            
+            devices = []
+            for line in result.stdout.replace('\r', '').splitlines()[1:]:
+                match = ADB._device_pattern.match(line)
+                if match:
+                    devices.append(match.group(1))
+            
+            logger.debug(f"Found devices: {devices}")
+            return devices
+        except (subprocess.TimeoutExpired, Exception) as e:
+            logger.error(f"Failed to list devices: {e}")
+            return []
 
     @staticmethod
-    def list_device():
-        """获取设备列表
-        :return: 返回设备列表
-        :rtype: list
-        """
-        proc = subprocess.Popen("adb devices", stdout=subprocess.PIPE, shell=True)
-        result = proc.stdout.read()
-        if not isinstance(result, str):
-            result = result.decode('utf-8')
-        result = result.replace('\r', '').splitlines()
-        logger.debug("adb devices:")
-        logger.debug(result)
-        device_list = []
-        for device in result[1:]:
-            if len(device) <= 1 or not '\t' in device: continue
-            if device.split('\t')[1] == 'device':
-                # 只获取连接正常的
-                device_list.append(device.split('\t')[0])
-        return device_list
+    def is_connected(device_id: str) -> bool:
+        """检查设备是否已连接"""
+        return device_id in ADB.list_devices()
 
     @staticmethod
-    def recover():
-        if ADB.checkAdbNormal():
-            logger.debug("adb is normal")
+    def recover() -> None:
+        """恢复 ADB 连接"""
+        if ADB.check_adb_normal():
+            logger.debug("ADB is normal")
             return
-        else:
-            logger.error("adb is not normal")
-            ADB.kill_server()
-            ADB.start_server()
+        
+        logger.error("ADB is not normal, restarting...")
+        ADB.kill_server()
+        ADB.start_server()
 
     @staticmethod
-    def checkAdbNormal():
-        sub = subprocess.Popen("adb devices", stdout=subprocess.PIPE, shell=True)
-        adbRet = str(sub.stdout.read(), "utf-8")
-        sub.wait()
-        logger.debug("adb device ret:%s" % adbRet)
-        if not adbRet:
-            logger.debug("devices list maybe is empty")
+    def check_adb_normal() -> bool:
+        """检查 ADB 服务是否正常"""
+        try:
+            result = subprocess.run(
+                ['adb', 'devices'],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            output = result.stdout
+            logger.debug(f"ADB check output: {output}")
+                
+            if "daemon not running" in output:
+                logger.warning("ADB daemon not running")
+                return False
+            elif "ADB server didn't ACK" in output:
+                logger.warning("ADB server error, port 5037 may be occupied")
+                return False
             return True
-        else:
-            if "daemon not running." in adbRet:
-                logger.warning("daemon not running.")
-                return False
-            elif "ADB server didn't ACK" in adbRet:
-                logger.warning("error: ADB server didn't ACK,kill occupy 5037 port process")
-                return False
-            else:
-                return True
-
+        except (subprocess.TimeoutExpired, Exception) as e:
+            logger.error(f"ADB check failed: {e}")
+            return False
+    
     @staticmethod
-    def kill_server():
-        logger.warning("kill-server")
-        os.system("adb kill-server")
-
+    def kill_server() -> None:
+        """停止 ADB 服务"""
+        logger.warning("Killing ADB server...")
+        subprocess.run(['adb', 'kill-server'], capture_output=True)
+    
     @staticmethod
-    def start_server():
-        ADB.killOccupy5037Process()
-        logger.warning("fork-server")
-        os.system("adb fork-server server -a")
-
+    def start_server() -> None:
+        """启动 ADB 服务"""
+        ADB._kill_5037_process()
+        logger.warning("Starting ADB server...")
+        subprocess.run(['adb', 'start-server'], capture_output=True)
+    
     @staticmethod
-    def killOccupy5037Process():
-        if ADB.get_os_name() == "Windows":
-            sub = subprocess.Popen('netstat -ano|findstr \"5037\"', stdout=subprocess.PIPE, shell=True)
-            ret = sub.stdout.read()
-            sub.wait()
-            if not ret:
-                logger.debug("netstat is empty")
-                return
-            lines = ret.splitlines()
-            for line in lines:
-                if "LISTENING" in line:
-                    logger.debug(line)
-                    pid = line.split()[-1]
-                    sub = subprocess.Popen('tasklist |findstr %s' % pid, stdout=subprocess.PIPE, shell=True)
-                    ret = sub.stdout.read()
-                    sub.wait()
-                    process = ret.split()[0]
-                    logger.debug("pid:%s ,process:%s occupy 5037 port" % (pid, process))
-                    #  DDMS会用到adb 杀了adb会导致 IDE调试或控制台可能不正常，后面需要改环境变量
-                    subprocess.Popen("taskkill /T /F /PID %s" % pid, stdout=subprocess.PIPE, shell=True)
-                    logger.debug("kill process %s" % process)
+    def _kill_5037_process() -> None:
+        """杀死占用 5037 端口的进程（仅 Windows）"""
+        if ADB.get_os_name() != "Windows":
+            return
+            
+        try:
+            # 查找占用 5037 端口的进程
+            result = subprocess.run(
+                ['netstat', '-ano'],
+                capture_output=True,
+                text=True
+            )
+                
+            for line in result.stdout.splitlines():
+                if ':5037' in line and 'LISTENING' in line:
+                    parts = line.split()
+                    pid = parts[-1]
+                    logger.debug(f"Found process {pid} occupying port 5037")
+                        
+                    # 获取进程名
+                    task_result = subprocess.run(
+                        ['tasklist', '/FI', f'PID eq {pid}'],
+                        capture_output=True,
+                        text=True
+                    )
+                        
+                    if task_result.returncode == 0:
+                        logger.warning(f"Killing process {pid} on port 5037")
+                        subprocess.run(
+                            ['taskkill', '/T', '/F', '/PID', pid],
+                            capture_output=True
+                        )
                     break
-            else:
-                logger.debug("don't have process occupy 5037")
+        except Exception as e:
+            logger.error(f"Failed to kill 5037 process: {e}")
 
     def _timer(self, process, timeout):
         """进程超时器，监控adb同步命令执行是否超时，超时强制结束执行。当timeout<=0时，永不超时
