@@ -1,93 +1,100 @@
-import os
-import re
-import time
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+FPS 测试工具 - 自动滑动屏幕模拟用户操作
+"""
+import argparse
 import random
+import re
+import subprocess
+import sys
+import time
 
-
-def getPackageName():
-    """
-    :return: 获得包名
-    """
-    try:
-        dev = getDev()
-        if not dev:  # Check if device is available
-            return '未找到有效设备'
-
-        cmd = f'adb -s {dev} shell dumpsys window w | findstr / | findstr name='
-        context = os.popen(cmd)
-        data = context.readlines()
-
-        # Simplified package name extraction with loop
-        target_activity = 'com.x.x.android.MainActivity'
-        pattern = re.compile(r'\((.*?)/', re.S)  # Reusable regex pattern
-
-        for line in data:
-            if target_activity in line:
-                match = pattern.search(line)
-                if match:
-                    # Extract package name (handles different offsets with split)
-                    return match.group(1).split()[-1]
-
-        return '取不到包名,请先启动应用or重启应用'
-    except EnvironmentError as error:
-        print('请用USB连接设备', error)
-    except Exception as error:
-        print(error)
-
-
-def getDev():
-    """
-    :return: 获得设备id
-    """
-    try:
-        # Use regex for reliable device ID extraction
-        result = os.popen('adb devices').read()
-        match = re.search(r'^(\S+)\s+device$', result, re.MULTILINE)
-        if match:
-            return match.group(1)  # Return first connected device
-        return None  # No valid device found
-    except Exception as error:
-        print(f"获取设备ID失败: {error}")
-        return None
-
-
-def Fps():
-    device_id = getDev()
-    if not device_id:
-        print("未找到连接的设备,无法执行操作")
-        return
-
-    print(f'当前设备id: {device_id}')
-    i = 1
-    # Define swipe sequences as constants
-    SWIPE_SEQ1 = [
+# 滑动序列配置
+SWIPE_SEQUENCES = [
+    [
         'input swipe 100 550 100 100 50',
         'input swipe 200 600 200 200 100',
         'input swipe 500 500 200 200 100'
-    ]
-    SWIPE_SEQ2 = [
+    ],
+    [
         'input swipe 400 250 360 100 150',
         'input swipe 500 720 400 500 150'
     ]
+]
 
-    while i <= 2000:
-        # Randomly choose sequence and execute swipes
-        if random.randint(1, 2) == 1:
-            swipe_list = SWIPE_SEQ1
-        else:
-            swipe_list = SWIPE_SEQ2
+DEVICE_PATTERN = re.compile(r'^(\S+)\s+device$', re.MULTILINE)
+PACKAGE_PATTERN = re.compile(r'\((.*?)/', re.S)
 
-        # Execute up to 20 swipes with loop control
-        for _ in range(20):
-            if i > 2000:
-                break
-            s = random.choice(swipe_list)
-            adb_cmd = f'adb -s {device_id} shell {s}'
-            os.system(adb_cmd)
-            i += 1
-            print(f'{device_id}: {adb_cmd}, i={i}')
-            time.sleep(0.05)
+
+def get_device() -> str | None:
+    """获取第一个连接的设备 ID"""
+    try:
+        result = subprocess.run(['adb', 'devices'], capture_output=True, text=True, check=True)
+        match = DEVICE_PATTERN.search(result.stdout)
+        return match.group(1) if match else None
+    except (subprocess.CalledProcessError, Exception) as e:
+        print(f"获取设备失败: {e}")
+        return None
+
+
+def get_package_name(device: str, activity: str = 'com.x.x.android.MainActivity') -> str:
+    """获取当前运行的应用包名"""
+    try:
+        cmd = f'adb -s {device} shell dumpsys window w | findstr / | findstr name='
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        
+        for line in result.stdout.splitlines():
+            if activity in line:
+                match = PACKAGE_PATTERN.search(line)
+                if match:
+                    return match.group(1).split()[-1]
+        
+        return '未找到包名，请先启动应用'
+    except Exception as e:
+        return f'获取包名失败: {e}'
+
+
+def run_swipe_test(device: str, count: int = 2000, batch_size: int = 20) -> None:
+    """执行滑动测试"""
+    print(f'开始 FPS 测试，设备: {device}')
+    
+    for i in range(1, count + 1):
+        swipe_list = random.choice(SWIPE_SEQUENCES)
+        swipe_cmd = random.choice(swipe_list)
+        
+        subprocess.run(['adb', '-s', device, 'shell', swipe_cmd], capture_output=True)
+        
+        if i % batch_size == 0:
+            print(f'进度: {i}/{count}')
+        
+        time.sleep(0.05)
+    
+    print(f'测试完成，共执行 {count} 次滑动')
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description='FPS 测试工具 - 自动滑动屏幕')
+    parser.add_argument('-c', '--count', type=int, default=2000, help='滑动次数，默认 2000')
+    parser.add_argument('-d', '--device', help='指定设备 ID，默认自动获取')
+    parser.add_argument('--get-package', action='store_true', help='获取当前包名')
+    args = parser.parse_args()
+
+    device = args.device or get_device()
+    if not device:
+        print("错误: 未找到连接的设备")
+        return 1
+
+    print(f'设备: {device}')
+
+    if args.get_package:
+        package = get_package_name(device)
+        print(f'包名: {package}')
+        return 0
+
+    run_swipe_test(device, args.count)
+    return 0
 
 
 if __name__ == '__main__':
-    Fps()
+    sys.exit(main())

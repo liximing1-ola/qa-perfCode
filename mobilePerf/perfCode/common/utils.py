@@ -1,155 +1,126 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+工具函数模块
+"""
 import os
 import time
 import re
 import zipfile
-
-BaseDir = os.path.dirname(os.path.abspath(__file__))
-
-
-class TimeUtils(object):
-    UnderLineFormatter = "%Y_%m_%d_%H_%M_%S"
-    NormalFormatter = "%Y-%m-%d %H-%M-%S"
-    ColonFormatter = "%Y-%m-%d %H:%M:%S"
-
-    # 文件路径要用这个，mac有空格，很麻烦
-    @staticmethod
-    def getCurrentTimeUnderline():
-        return time.strftime(TimeUtils.UnderLineFormatter, time.localtime(time.time()))
-
-    @staticmethod
-    def getCurrentTime():
-        return time.strftime(TimeUtils.NormalFormatter, time.localtime(time.time()))
-
-    @staticmethod
-    def formatTimeStamp(timestamp):
-        return time.strftime(TimeUtils.NormalFormatter, time.localtime(timestamp))
-
-    @staticmethod
-    def getTimeStamp(time_str, format_time):
-        timeArray = time.strptime(time_str, format_time)
-        # 转换成时间戳
-        return time.mktime(timeArray)
-
-    @staticmethod
-    def is_between_times(timestamp, begin_timestamp, end_timestamp):
-        if begin_timestamp < timestamp < end_timestamp:
-            return True
-        else:
-            return False
-
-    @staticmethod
-    def get_interval(begin_timestamp, end_timestamp):
-        """
-        :param begin_timestamp:
-        :param end_timestamp:
-        :return:求起止时间戳之间的时间间隔
-        """
-        interval = end_timestamp - begin_timestamp
-        return round(float(interval) / (60 * 60))
+from datetime import datetime
+from pathlib import Path
 
 
-class FileUtils(object):
-
-    @staticmethod
-    def makedir(dir):
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-
-    @staticmethod
-    def get_top_dir():
-        print(BaseDir)
-        dir = os.path.dirname(BaseDir)
-        path = os.path.dirname(dir)
-        return path
-
-    @staticmethod
-    def get_files(path=None, pattern=None):
-        """
-        :param path: 目录
-        :param pattern: 正则
-        :return: 递归遍历目录，返回匹配的文件路径
-        """
-        file_list = []
-        if path is None or not os.path.exists(path):  # 没有路径返回空
-            return file_list
-        for oneFile in os.listdir(path):
-            if os.path.isfile(os.path.join(path, oneFile)):
-                match = False
-                if pattern:
-                    match = re.match(pattern, oneFile, flags=0)
-                if match:
-                    file_list.append(os.path.join(path, oneFile))
-            elif os.path.isdir(os.path.join(path, oneFile)):
-                file_list.extend(FileUtils.get_files(os.path.join(path, oneFile), pattern))  # 是文件夹 遍历下一级目录下 符合正则的文件 并追加
-        return file_list
-
-    @staticmethod
-    def get_FileSize(filePath):
-        """
-        获取文件的大小,结果保留4位小数，单位为MB
-        :param filePath:
-        :return:
-        """
-        fsize = os.path.getsize(filePath)
-        fsize /= float(1024 * 1024)
-        return round(fsize, 4)
-
-    @staticmethod
-    def get_FileAccessTime(filePath):
-        """获取文件的访问时间"""
-        t = os.path.getatime(filePath)
-        return t
-
-    @staticmethod
-    def get_FileCreateTime(filePath):
-        """获取文件的创建时间"""
-        t = os.path.getctime(filePath)
-        return t
-
-    @staticmethod
-    def get_FileModifyTime(filePath):
-        """获取文件的修改时间"""
-        t = os.path.getmtime(filePath)
-        return t
-
-
-class ZipUtils(object):
-
-    @staticmethod
-    def zip_dir(dirname, zipfilename):
-        filelist = []
-        if os.path.isfile(dirname):
-            filelist.append(dirname)
-        else:
-            for root, dirs, files in os.walk(dirname):
-                for name in files:
-                    filelist.append(os.path.join(root, name))
-
-        zf = zipfile.ZipFile(zipfilename, "w", zipfile.zlib.DEFLATED)
-        for tar in filelist:
-            arcname = tar[len(dirname):]
-            # print tar
-            # print arcname
-            zf.write(tar, arcname)
-        zf.close()
-
-
-def ms2s(value):
+def ms2s(value: float) -> float:
+    """毫秒转秒"""
     return round(value / 1000.0, 2)
 
 
-def transfer_temp(temp):
+def transfer_temp(temp: float) -> float:
+    """温度转换"""
     return round(temp / 10.0, 1)
 
 
-def mV2V(v):
+def mV2V(v: float) -> float:
+    """毫伏转伏"""
     return round(v / 1000.0, 2)
 
 
-def uA2mA(c):
+def uA2mA(c: float) -> float:
+    """微安转毫安"""
     return round(c / 1000.0, 2)
 
 
+class TimeUtils:
+    """时间工具类"""
+    UNDERLINE_FMT = "%Y_%m_%d_%H_%M_%S"
+    NORMAL_FMT = "%Y-%m-%d %H-%M-%S"
+    COLON_FMT = "%Y-%m-%d %H:%M:%S"
+
+    @staticmethod
+    def get_current_time_underline() -> str:
+        """获取带下划线的时间字符串"""
+        return datetime.now().strftime(TimeUtils.UNDERLINE_FMT)
+
+    @staticmethod
+    def get_current_time() -> str:
+        """获取当前时间字符串"""
+        return datetime.now().strftime(TimeUtils.NORMAL_FMT)
+
+    @staticmethod
+    def format_timestamp(timestamp: float) -> str:
+        """格式化时间戳"""
+        return datetime.fromtimestamp(timestamp).strftime(TimeUtils.NORMAL_FMT)
+
+    @staticmethod
+    def parse_time(time_str: str, fmt: str) -> float:
+        """解析时间字符串为时间戳"""
+        return datetime.strptime(time_str, fmt).timestamp()
+
+    @staticmethod
+    def is_between(timestamp: float, begin: float, end: float) -> bool:
+        """判断时间是否在范围内"""
+        return begin < timestamp < end
+
+    @staticmethod
+    def get_hours_diff(begin: float, end: float) -> int:
+        """获取时间差（小时）"""
+        return round((end - begin) / 3600)
+
+
+class FileUtils:
+    """文件工具类"""
+    
+    @staticmethod
+    def ensure_dir(path: str | Path) -> Path:
+        """确保目录存在，返回 Path 对象"""
+        p = Path(path)
+        p.mkdir(parents=True, exist_ok=True)
+        return p
+
+    @staticmethod
+    def get_project_root() -> Path:
+        """获取项目根目录"""
+        return Path(__file__).parent.parent.parent
+
+    @staticmethod
+    def find_files(directory: str | Path, pattern: str | None = None) -> list[Path]:
+        """递归查找文件"""
+        path = Path(directory)
+        if not path.exists():
+            return []
+        
+        files = []
+        regex = re.compile(pattern) if pattern else None
+        
+        for item in path.rglob('*'):
+            if item.is_file():
+                if regex is None or regex.match(item.name):
+                    files.append(item)
+        
+        return files
+
+    @staticmethod
+    def get_file_size_mb(filepath: str | Path) -> float:
+        """获取文件大小（MB）"""
+        return round(Path(filepath).stat().st_size / (1024 * 1024), 4)
+
+
+class ZipUtils:
+    """压缩工具类"""
+    
+    @staticmethod
+    def zip_directory(source_dir: str | Path, output_zip: str | Path) -> None:
+        """压缩目录"""
+        source = Path(source_dir)
+        with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for file_path in source.rglob('*'):
+                if file_path.is_file():
+                    arcname = str(file_path.relative_to(source))
+                    zf.write(file_path, arcname)
+
+
 if __name__ == '__main__':
-    ZipUtils.zip_dir("/Users/project/mobileperf/common/test", "test.zip")
+    # 测试
+    print(f"当前时间: {TimeUtils.get_current_time()}")
+    print(f"项目根目录: {FileUtils.get_project_root()}")

@@ -34,6 +34,7 @@ def find_latest_csv(perf_dir: Path) -> Path | None:
 def parse_csv(csv_path: Path, perf_type: str) -> list[int]:
     """解析 CSV 文件，返回数据列表"""
     if perf_type not in PERF_CONFIG:
+        print('error: not support')
         raise ValueError(f"不支持的性能类型: {perf_type}")
     
     config = PERF_CONFIG[perf_type]
