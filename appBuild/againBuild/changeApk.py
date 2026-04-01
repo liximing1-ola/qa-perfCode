@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-APKTOOL = "apktool_2.6.1.jar"
+APKTOOL = "apktool_3.0.1.jar"
 
 
 def decompile(apk_path: Path) -> int:
