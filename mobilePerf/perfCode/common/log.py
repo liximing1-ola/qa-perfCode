@@ -58,7 +58,7 @@ def create_logger(
         log_dir = get_log_dir()
     Path(log_dir).mkdir(parents=True, exist_ok=True)
     
-    log_file = os.path.join(log_dir, "xn_log")
+    log_file = Path(log_dir) / "xn_log"
     file_handler = logging.handlers.TimedRotatingFileHandler(
         filename=log_file,
         when="D",

@@ -14,74 +14,81 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Lists all the apks for a given app."""
-
+"""Query voided purchases from Google Play."""
 import argparse
-import io
-import base64
 import json
+import sys
 
-from apiclient.discovery import build
 import httplib2
+from apiclient.discovery import build
 from oauth2client import client
 from oauth2client.service_account import ServiceAccountCredentials
 
-SERVICE_ACCOUNT_EMAIL = (
-    'oversea@api-8878995667639-616616.iam.gserviceaccount.com')
 
-# Declare command-line flags.
-argparser = argparse.ArgumentParser(add_help=False)
-argparser.add_argument('package_name',
-                       help='The package name. Example: com.android.sample')
-
-
-def main():
-    # Load the key in PKCS 12 format that you downloaded from the Google APIs
-    # Console when you created your Service account.
-    #   f = open('key.p12', 'rb')
-    #   key = f.read()
-    #   f.close()
-
-    # Create an httplib2.Http object to handle our HTTP requests and authorize it
-    # with the Credentials. Note that the first parameter, service_account_name,
-    # is the Email address created for the Service account. It must be the email
-    # address associated with the key that was created.
-    credentials = ServiceAccountCredentials.from_json_keyfile_name('key.json',
-                                                                   scopes=[
-                                                                       'https://www.googleapis.com/auth/androidpublisher'])
+def create_service() -> build:
+    """创建 Google Play 服务"""
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        'key.json',
+        scopes=['https://www.googleapis.com/auth/androidpublisher']
+    )
     http = httplib2.Http()
     http = credentials.authorize(http)
+    return build('androidpublisher', 'v3', http=http)
 
-    service = build('androidpublisher', 'v3', http=http)
 
-    # Process flags and read their values.
-    flags = argparser.parse_args()
-    package_name = flags.package_name
+def query_voided_purchases(service, package_name: str) -> dict:
+    """查询已作废的购买
+    
+    :param service: Google Play 服务
+    :param package_name: 包名
+    :return: 查询结果
+    """
+    return service.purchases().voidedpurchases().list(
+        packageName=package_name,
+        type="1"
+    ).execute()
 
+
+def save_results(data: dict, output_file: str = 'voided.json') -> None:
+    """保存结果到文件
+    
+    :param data: 查询结果
+    :param output_file: 输出文件路径
+    """
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+    print(f"Results saved to: {output_file}")
+
+
+def main() -> int:
+    """主函数"""
+    parser = argparse.ArgumentParser(description='Query voided purchases')
+    parser.add_argument('package_name', help='Package name, e.g., com.android.sample')
+    parser.add_argument('-o', '--output', default='voided.json', help='Output file')
+    args = parser.parse_args()
+    
     try:
-
-        # edit_request = service.edits().insert(body={}, packageName=package_name)
-        # result = edit_request.execute()
-        # edit_id = result['id']
-
-        subRes = service.purchases().voidedpurchases().list(
-            packageName=package_name, type="1").execute()
-        print("查询结果:\n")
-        ra = json.dumps(subRes, indent=4)
-
-        with open('voided.json', "wb") as fw:
-            fw.write(ra.encode())
-
-        # apks_result = service.edits().bundles().list(
-        # editId=(edit_id, packageName=package_name).execute()
-
-        # for apk in apks_result['bundles']:
-        #     print('versionCode: %s, binary.sha1: %s' % (apk['versionCode'], apk['sha1']))
-
+        service = create_service()
+        
+        print(f"Querying voided purchases for: {args.package_name}")
+        result = query_voided_purchases(service, args.package_name)
+        
+        # 打印结果
+        print("\nQuery result:")
+        print(json.dumps(result, indent=4, ensure_ascii=False))
+        
+        # 保存到文件
+        save_results(result, args.output)
+        
+        return 0
+        
     except client.AccessTokenRefreshError:
-        print('The credentials have been revoked or expired, please re-run the '
-              'application to re-authorize')
+        print("Error: Credentials expired or revoked")
+        return 1
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

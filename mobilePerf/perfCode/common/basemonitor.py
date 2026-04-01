@@ -1,36 +1,42 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import logging
-
-logger = logging.getLogger(__name__)
-
-
-class Monitor(object):
-
-    def __init__(self, **kwargs):
-        """构造器
-        :param dict kwargs: 配置项
-        """
-        self.config = kwargs  # 配置项
-        self.matched_data = {}  # 采集性能数据
-
-    def start(self):
-        """子类中实现当前接口开始采集性能数据"""
-        logger.warning("请在%s类中实现start方法" % type(self))
-
-    def clear(self):
-        """清空monitor保存的数据"""
-        self.matched_data = {}
-
-    def stop(self):
-        """子类中实现该接口，结束采集性能数据，如果后期需要解析性能数据，需要保存数据文件"""
-        logger.warning("请在%s类中实现stop方法" % type(self))
-
-    def save(self):
-        """保存数据
-        """
-        logger.warning("请在%s类中实现save方法" % type(self))
-        logger.debug(",")
+"""
+性能监控器基类
+定义性能数据采集的标准接口
+"""
+from abc import ABC, abstractmethod
+from typing import Any
 
 
-if __name__ == '__main__':
-    pass
+class Monitor(ABC):
+    """性能监控器抽象基类
+    
+    子类需要实现 start, stop, save 方法
+    """
+
+    def __init__(self, **kwargs: Any):
+        self.config = kwargs
+        self.matched_data: dict = {}
+
+    @abstractmethod
+    def start(self) -> None:
+        """开始采集性能数据"""
+        pass
+
+    @abstractmethod
+    def stop(self) -> None:
+        """停止采集性能数据"""
+        pass
+
+    @abstractmethod
+    def save(self) -> None:
+        """保存采集的数据"""
+        pass
+
+    def clear(self) -> None:
+        """清空已采集的数据"""
+        self.matched_data.clear()
+
+    def get_data(self) -> dict:
+        """获取已采集的数据"""
+        return self.matched_data.copy()

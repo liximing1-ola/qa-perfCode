@@ -15,183 +15,224 @@
 # limitations under the License.
 
 """Uploads apk to alpha track and updates its listing properties."""
-import os
-try:
-    import googleapiclient
-except ImportError:
-    print("installing googleapiclient.......")
-    res = os.system("pip3 install google-api-python-client")
-    if res != 0:
-        print("install success")
-
-try:
-    import oauth2client
-except ImportError:
-    print("installing oauth2client.......")
-    res = os.system("pip3 install oauth2client")
-    if res != 0:
-        print("install success")
-
-
 import argparse
-from google_translater import GoogleTranslater
-import sys
-from oauth2client import client
-from oauth2client.service_account import ServiceAccountCredentials
-import httplib2
-from apiclient.discovery import build
-from apiclient import sample_tools
-from googleapiclient.http import MediaFileUpload
 import mimetypes
 import socket
+import sys
+from pathlib import Path
 
+import httplib2
+from apiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from oauth2client import client
+from oauth2client.service_account import ServiceAccountCredentials
+
+from google_translater import GoogleTranslator, TranslationError
+
+# 设置超时和 MIME 类型
 socket.setdefaulttimeout(7 * 24 * 60 * 60)
 mimetypes.add_type("application/octet-stream", ".apk")
 mimetypes.add_type("application/octet-stream", ".aab")
 
-TRACK = 'production'  # Can be 'alpha', beta', 'production' or 'rollout'
+# 发布轨道
+TRACK_PRODUCTION = 'production'
 
-releaseNotes = [
-  {'language': 'en-SG', 'text':''''''},
-  {'language': 'en-AU', 'text':''''''},
-  {'language': 'en-CA', 'text':''''''},
-  {'language': 'en-GB', 'text':''''''},
-  {'language': 'en-IN', 'text':''''''},
-  {'language': 'en-US', 'text':''''''},
-  {'language': 'en-ZA', 'text':''''''},
-  {'language': 'ar', 'text':''''''},
-  {'language': 'id','text':''''''},
-  {'language': 'ko-KR','text':''''''},
-  {'language': 'ms','text':''''''},
-  {'language': 'ms-MY','text':''''''},
-  {'language': 'th','text':''''''},
-  {'language': 'tr-TR','text':''''''},
-  {'language': 'vi','text':''''''},
-  {'language': 'zh-TW','text':''''''},
-  {'language': 'zh-CN','text':''''''},
-  {'language': 'zh-HK','text':''''''}
+# 支持的语言列表
+SUPPORTED_LANGUAGES = [
+    'en-SG', 'en-AU', 'en-CA', 'en-GB', 'en-IN', 'en-US', 'en-ZA',
+    'ar', 'id', 'ko-KR', 'ms', 'ms-MY', 'th', 'tr-TR', 'vi',
+    'zh-TW', 'zh-CN', 'zh-HK'
 ]
 
-# Declare command-line flags.
-argparser = argparse.ArgumentParser(add_help=False)
-argparser.add_argument('package_name',
-                       help='The package name. Example: com.android.sample')
-argparser.add_argument('apk_file',
-                       nargs='?',
-                       default='',
-                       help='The path to the APK file to upload.')
-argparser.add_argument('draft_name',
-                       nargs='?',
-                       default=u'最新版',
-                       help='草稿名称')
-argparser.add_argument('release_note',
-                       nargs='?',
-                       default='',
-                       help='新版说明,默认英文')
+
+def create_release_notes(base_note: str, translator: GoogleTranslator) -> list[dict]:
+    """创建多语言发布说明
+    
+    :param base_note: 基础说明（英文）
+    :param translator: 翻译器
+    :return: 多语言说明列表
+    """
+    if not base_note:
+        return []
+    
+    release_notes = []
+    
+    for lang in SUPPORTED_LANGUAGES:
+        note = {'language': lang, 'text': ''}
+        
+        try:
+            if lang.startswith('en'):
+                note['text'] = base_note
+            elif '-' in lang:
+                base_lang = lang.split('-')[0]
+                # 繁体中文特殊处理
+                if base_lang == 'zh' and lang != 'zh-CN':
+                    note['text'] = translator.translate(base_note, 'zh-TW')
+                else:
+                    note['text'] = translator.translate(base_note, base_lang)
+            else:
+                note['text'] = translator.translate(base_note, lang)
+        except TranslationError as e:
+            print(f"Warning: Failed to translate to {lang}: {e}")
+            note['text'] = base_note
+        
+        # 检查长度限制
+        if len(note['text']) > 500:
+            print(f"Error: {lang} text too long ({len(note['text'])} > 500)")
+            sys.exit(1)
+        
+        release_notes.append(note)
+    
+    return release_notes
 
 
-def main(argv):
-  credentials = ServiceAccountCredentials.from_json_keyfile_name('key.json',
-      scopes=['https://www.googleapis.com/auth/androidpublisher'])
-  http = httplib2.Http()
-  http.redirect_codes = http.redirect_codes - {308}
-  http = credentials.authorize(http)
-
-  service = build('androidpublisher', 'v3', http=http)
-  flags = argparser.parse_args()
-  package_name = flags.package_name
-  apk_file = flags.apk_file
-  draft_name = flags.draft_name
-  release_note = flags.release_note
-  translater = GoogleTranslater()
-  
-  try:
+def upload_bundle(service, package_name: str, apk_file: str) -> dict:
+    """上传 AAB 文件
+    
+    :param service: Google Play 服务
+    :param package_name: 包名
+    :param apk_file: AAB 文件路径
+    :return: 上传结果
+    """
+    # 创建编辑
     edit_request = service.edits().insert(body={}, packageName=package_name)
     result = edit_request.execute()
     edit_id = result['id']
-
-    aabMedia = MediaFileUpload(apk_file,chunksize=1024*1024, resumable=True)
-
+    
+    # 准备上传
+    media = MediaFileUpload(apk_file, chunksize=1024*1024, resumable=True)
     request = service.edits().bundles().upload(
-            editId=edit_id,
-            ackBundleInstallationWarning=True,
-            packageName=package_name,
-            media_body=aabMedia)
-
+        editId=edit_id,
+        ackBundleInstallationWarning=True,
+        packageName=package_name,
+        media_body=media
+    )
+    
+    # 上传并显示进度
     response = None
-    tags = ['—','\\','|','/']
+    spinner = ['—', '\\', '|', '/']
+    
     while response is None:
         status, response = request.next_chunk()
         if status:
-            pro = int(status.progress() * 100)
-            out_string = "\r[%s]%3d%%|%s| %s/100" %(tags[(pro-1)%4], pro, "█" * (pro // 2), pro)
-            sys.stdout.write(out_string)
+            progress = int(status.progress() * 100)
+            bar = "█" * (progress // 2)
+            symbol = spinner[(progress - 1) % 4]
+            sys.stdout.write(f"\r[{symbol}]{progress:3d}%|{bar}| {progress}/100")
             sys.stdout.flush()
-        else:
-            print(status)
-            print(response)
-            break
-
-    print(response)
-    print('Version code %d has been uploaded' % response['versionCode'])
-
-    commit_request = service.edits().commit(
-        editId=edit_id, packageName=package_name).execute()
     
-    print(commit_request)
+    print(f"\nVersion code {response['versionCode']} uploaded")
+    
+    # 提交编辑
+    service.edits().commit(editId=edit_id, packageName=package_name).execute()
+    
+    return response
 
-  except client.AccessTokenRefreshError:
-    print ('The credentials have been revoked or expired, please re-run the '
-           'application to re-authorize')
 
-  len1 = len(release_note)
-  print('<---Translate start--->%s'% len1)
-  if len1 > 0:
-    print('<---Translate releaseNotes...--->')
-    for note in releaseNotes:
-        if len(note['text']) > 0:
-            continue
-        if note['language'].startswith('en'):
-            note['text'] = release_note
-        elif note['language'].find('-') > 0:
-            lan = note['language'].split('-')
-            if lan[0]=='zh' and lan[1] != 'CN':
-                targetText = translater.translate(release_note,'zh-TW')
-            else:
-                targetText = translater.translate(release_note,lan[0])
-            note['text'] = targetText
-        else:
-            targetText = translater.translate(release_note,note['language'])
-            note['text'] = targetText
-        textLen = len(note['text'])
-        if textLen > 500:
-            print(f"Language {note['language']} with length {textLen}, which is too long (max: 500).")
-            exit(0)
-    print(releaseNotes)
-
+def update_track(
+    service,
+    package_name: str,
+    version_code: int,
+    draft_name: str,
+    release_notes: list[dict]
+) -> None:
+    """更新发布轨道
+    
+    :param service: Google Play 服务
+    :param package_name: 包名
+    :param version_code: 版本号
+    :param draft_name: 草稿名称
+    :param release_notes: 发布说明
+    """
     edit_request = service.edits().insert(body={}, packageName=package_name)
     result = edit_request.execute()
     edit_id = result['id']
-
+    
     track_response = service.edits().tracks().update(
         editId=edit_id,
-        track=TRACK,
+        track=TRACK_PRODUCTION,
         packageName=package_name,
-        body={u'releases': [{
-            u'name': u'%s draft' % draft_name,
-            u'versionCodes': [response['versionCode']],
-            u'status': u'draft',
-            u'releaseNotes':releaseNotes
-        }]}).execute()
-
-    print('Track %s is set with releases: %s' % (track_response['track'], str(track_response['releases'])))
-
-    commit_request = service.edits().commit(
-        editId=edit_id, packageName=package_name).execute()
-
-    print('Releasenotes has been committed')
-
+        body={
+            'releases': [{
+                'name': f'{draft_name} draft',
+                'versionCodes': [version_code],
+                'status': 'draft',
+                'releaseNotes': release_notes
+            }]
+        }
+    ).execute()
     
+    print(f"Track {track_response['track']} updated")
+    
+    service.edits().commit(editId=edit_id, packageName=package_name).execute()
+    print("Release notes committed")
+
+
+def create_service() -> build:
+    """创建 Google Play 服务"""
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+        'key.json',
+        scopes=['https://www.googleapis.com/auth/androidpublisher']
+    )
+    http = httplib2.Http()
+    http.redirect_codes = http.redirect_codes - {308}
+    http = credentials.authorize(http)
+    
+    return build('androidpublisher', 'v3', http=http)
+
+
+def main() -> int:
+    """主函数"""
+    parser = argparse.ArgumentParser(description='Upload APK/AAB to Google Play')
+    parser.add_argument('package_name', help='Package name, e.g., com.android.sample')
+    parser.add_argument('apk_file', nargs='?', default='', help='APK/AAB file path')
+    parser.add_argument('draft_name', nargs='?', default='最新版', help='Draft name')
+    parser.add_argument('release_note', nargs='?', default='', help='Release notes (English)')
+    args = parser.parse_args()
+    
+    # 验证文件
+    if args.apk_file and not Path(args.apk_file).exists():
+        print(f"Error: File not found: {args.apk_file}")
+        return 1
+    
+    try:
+        # 创建服务
+        service = create_service()
+        
+        # 上传文件
+        if args.apk_file:
+            print("Uploading bundle...")
+            response = upload_bundle(service, args.package_name, args.apk_file)
+            version_code = response['versionCode']
+        else:
+            print("Warning: No file to upload")
+            return 0
+        
+        # 翻译并更新发布说明
+        if args.release_note:
+            print("\nTranslating release notes...")
+            translator = GoogleTranslator()
+            release_notes = create_release_notes(args.release_note, translator)
+            
+            print("\nUpdating track...")
+            update_track(
+                service,
+                args.package_name,
+                version_code,
+                args.draft_name,
+                release_notes
+            )
+        
+        print("\nDone!")
+        return 0
+        
+    except client.AccessTokenRefreshError:
+        print("Error: Credentials expired or revoked")
+        return 1
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
 
 if __name__ == '__main__':
-  main(sys.argv)
+    sys.exit(main())
