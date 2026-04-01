@@ -21,7 +21,7 @@ def decompile(apk_path: Path) -> int:
         print(f"Error: File not found: {apk_path}")
         return 1
     
-    cmd = ["java", "-jar", APKTOOL, "d", "--only-main-classes", str(apk_path)]
+    cmd = ["java", "-jar", APKTOOL, "d", "-a", str(apk_path)]
     return subprocess.call(cmd)
 
 
