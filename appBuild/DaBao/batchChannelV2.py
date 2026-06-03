@@ -21,7 +21,7 @@ WALLE_JAR = "walle-cli-all.jar"
 def run_walle(*args) -> int:
     """执行 walle 命令"""
     cmd = ["java", "-jar", WALLE_JAR] + list(args)
-    return subprocess.call(cmd)
+    return subprocess.run(cmd).returncode
 
 
 def show_channel(apk_file: str) -> int:
@@ -47,18 +47,15 @@ def generate_channel_names(channel_arg: str, seq_args: tuple[int, int] | None = 
 def rename_apk(apk_name: str, channel: str) -> None:
     """重命名生成的 APK 文件
     
-    格式转换：appName_channelName-version.apk -> appName-channelName-version.apk
+    将 walle 生成的下划线分隔改为横线分隔：
+    appName_channelName.apk -> appName-channelName.apk
     """
     old_name = f"{apk_name}_{channel}.apk"
     if not Path(old_name).exists():
         return
     
-    parts = old_name.split('-')
-    if len(parts) >= 2:
-        parts[1] = channel
-        parts[-1] = parts[-1].split('_')[0]
-        new_name = '-'.join(parts)
-        Path(old_name).rename(new_name)
+    new_name = old_name.replace(f"_{channel}", f"-{channel}")
+    Path(old_name).rename(new_name)
 
 
 def process_channels(apk_file: str, channel_arg: str, seq_args: tuple[int, int] | None = None) -> int:
@@ -84,6 +81,21 @@ def process_channels(apk_file: str, channel_arg: str, seq_args: tuple[int, int] 
     return 0
 
 
+def parse_config_line(line: str) -> tuple[str, tuple[int, int] | None] | None:
+    """解析配置文件单行
+    
+    :param line: 配置行内容
+    :return: (channel_arg, seq_args) 或 None（跳过空行/注释）
+    """
+    line = line.strip()
+    if not line or line.startswith('#'):
+        return None
+    parts = line.split()
+    channel = parts[0]
+    seq_args = tuple(map(int, parts[1:3])) if len(parts) >= 3 else None
+    return channel, seq_args
+
+
 def process_config_file(apk_file: str, config_file: str) -> int:
     """从配置文件读取渠道列表
     
@@ -91,21 +103,21 @@ def process_config_file(apk_file: str, config_file: str) -> int:
     :param config_file: 配置文件路径
     :return: 返回码
     """
-    try:
-        with open(config_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith('#'):
-                    continue
-                args = line.split()
-                if len(args) >= 1:
-                    ret = process_channels(apk_file, args[0], tuple(map(int, args[1:3])) if len(args) >= 3 else None)
-                    if ret != 0:
-                        return ret
-        return 0
-    except FileNotFoundError:
+    config_path = Path(config_file)
+    if not config_path.exists():
         print(f"配置文件不存在：{config_file}")
         return 1
+    
+    try:
+        for line in config_path.read_text(encoding='utf-8').splitlines():
+            parsed = parse_config_line(line)
+            if parsed is None:
+                continue
+            channel_arg, seq_args = parsed
+            ret = process_channels(apk_file, channel_arg, seq_args)
+            if ret != 0:
+                return ret
+        return 0
     except ValueError as e:
         print(f"配置文件解析错误：{e}")
         return 1
@@ -143,9 +155,13 @@ def main() -> int:
     
     args = parser.parse_args()
     
-    # 显示渠道模式
-    if args.channel == 'show':
-        return show_channel(args.apk)
+    # 显示渠道模式: python batchChannelV2.py show <apk>
+    if args.apk == 'show':
+        if not args.channel:
+            print("错误：show 模式需要提供 APK 文件路径")
+            print("用法：python batchChannelV2.py show <apk>")
+            return 1
+        return show_channel(args.channel)
     
     # 配置文件模式
     if args.config_file:
