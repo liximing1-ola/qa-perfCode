@@ -12,8 +12,8 @@ from pathlib import Path
 class Config:
     """性能测试配置类"""
     
-    # 目标应用
-    package: str = 'com.xx.xx.xxx'
+    # 目标应用（直接在此修改）
+    package: str = 'com.imbb.banban.android'
     device_id: str = 'b286dc11'
     
     # 采集间隔（秒）
@@ -31,8 +31,8 @@ class Config:
         "-v -v 10000"
     )
     
-    # 日志路径
-    log_dir: Path = field(default_factory=lambda: Path("E:/report/log"))
+    # 日志路径（直接在此修改）
+    log_dir: Path = field(default_factory=lambda: Path('E:/report/log'))
     
     @property
     def log_file(self) -> Path:

@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-CSV 性能数据可视化工具
-
-支持 FPS、CPU、MEM、TEMP 数据的图表生成
-自动查找最新 CSV 文件或指定文件路径
-"""
+"""CSV 性能数据可视化工具"""
+import argparse
 import csv
-import platform
 import sys
 from datetime import datetime
 from pathlib import Path
+
 import matplotlib.pyplot as plt
 
 # 性能指标配置
@@ -41,10 +37,12 @@ PERF_CONFIG = {
     }
 }
 
+# 跨平台中文字体降级列表
+FONT_FALLBACK = ['SimHei', 'PingFang SC', 'Noto Sans CJK SC', 'Arial']
+
 
 class ChartError(Exception):
     """图表生成异常"""
-    pass
 
 
 def get_report_dir() -> Path:
@@ -53,85 +51,68 @@ def get_report_dir() -> Path:
 
 
 def find_latest_csv(perf_dir: Path) -> Path | None:
-    """查找最新的 CSV 文件
-    
-    :param perf_dir: 性能数据目录
-    :return: 最新的 CSV 文件路径，不存在返回 None
-    """
+    """查找最新的 CSV 文件"""
     csv_files = list(perf_dir.glob('*.csv'))
     return max(csv_files, key=lambda p: p.stat().st_mtime) if csv_files else None
 
 
 def parse_csv(csv_path: Path, perf_type: str) -> list[int]:
-    """解析 CSV 文件，返回数据列表
-    
-    :param csv_path: CSV 文件路径
-    :param perf_type: 性能类型
-    :return: 数据列表
-    :raises ChartError: 解析失败时
-    """
+    """解析 CSV 文件，返回数据列表"""
     if perf_type not in PERF_CONFIG:
         raise ChartError(f"不支持的性能类型：{perf_type}")
-    
+
     config = PERF_CONFIG[perf_type]
-    values = []
-    
+    values: list[int] = []
+
+    # 优先 UTF-8，GBK 降级
     try:
-        with open(csv_path, 'r', encoding='gbk') as f:
-            reader = csv.reader(f)
-            next(reader, None)  # 跳过表头
-            for row in reader:
-                try:
-                    val = round(float(row[1]))
-                    if config['filter'](val):
-                        values.append(val)
-                except (IndexError, ValueError):
-                    continue
-    except UnicodeDecodeError:
-        # 尝试 UTF-8 编码
         with open(csv_path, 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
             next(reader, None)
-            for row in reader:
-                try:
-                    val = round(float(row[1]))
-                    if config['filter'](val):
-                        values.append(val)
-                except (IndexError, ValueError):
-                    continue
-    
-    # 降采样（删除每隔一个元素）
+            rows = list(reader)
+    except UnicodeDecodeError:
+        with open(csv_path, 'r', encoding='gbk') as f:
+            reader = csv.reader(f)
+            next(reader, None)
+            rows = list(reader)
+
+    for row in rows:
+        try:
+            val = round(float(row[1]))
+            if config['filter'](val):
+                values.append(val)
+        except (IndexError, ValueError):
+            continue
+
+    # 降采样
     del values[1::2]
-    
-    # 去极值
+
+    # 去极值：各移除一个最大值和一个最小值
     if config['remove_extremes'] and len(values) > 2:
-        values.remove(max(values))
-        values.remove(min(values))
-    
+        max_idx = values.index(max(values))
+        del values[max_idx]
+        min_idx = values.index(min(values))
+        del values[min_idx]
+
     if values:
-        print(f"min: {min(values)}, max: {max(values)}, avg: {sum(values)//len(values)}")
-    
+        print(f"min: {min(values)}, max: {max(values)}, avg: {sum(values) // len(values)}")
+
     return values
 
 
 def create_chart(data: list[int], perf_type: str, output_path: Path) -> None:
-    """创建性能图表
-    
-    :param data: 数据列表
-    :param perf_type: 性能类型
-    :param output_path: 输出路径
-    """
+    """创建性能图表"""
     config = PERF_CONFIG[perf_type]
-    
+
     # 设置图表样式
     plt.rcParams.update({
         'figure.figsize': (8, 4),
         'savefig.dpi': 200,
         'figure.dpi': 100,
-        'font.sans-serif': ['SimHei', 'Arial'],  # 支持中文
+        'font.sans-serif': FONT_FALLBACK,
         'axes.unicode_minus': False
     })
-    
+
     x = range(1, len(data) + 1)
     plt.plot(x, data, color=config['color'], linewidth=1.5)
     plt.xlabel('Time Consuming', color='r')
@@ -142,81 +123,52 @@ def create_chart(data: list[int], perf_type: str, output_path: Path) -> None:
     plt.show()
 
 
-def get_csv_path(platform_type: str, args: list[str]) -> tuple[Path, str]:
-    """根据平台类型获取 CSV 路径和性能类型
-    
-    :param platform_type: 平台类型 (win/mac)
-    :param args: 命令行参数
-    :return: (CSV 路径，性能类型)
-    :raises FileNotFoundError: 文件不存在
-    :raises ValueError: 参数错误
-    """
-    report_dir = get_report_dir()
-    
-    if platform_type == 'win':
-        print('Platform: Windows')
-        if len(args) >= 2:
-            # 指定文件路径
-            return Path(args[0]), args[1].upper()
-        elif len(args) == 1:
-            # 自动查找最新文件
-            perf = args[0].upper()
-            csv_file = find_latest_csv(report_dir / perf)
-            if not csv_file:
-                raise FileNotFoundError(f"未找到 {perf} 的 CSV 文件")
-            return csv_file, perf
-        else:
-            raise ValueError("Windows 模式需要至少 1 个参数")
-    
-    elif platform_type == 'mac':
-        print('Platform: macOS')
-        if len(args) != 1:
-            raise ValueError("macOS 模式需要输入一个参数，如：cpu, mem, fps")
-        perf = args[0].upper()
-        csv_file = find_latest_csv(report_dir / perf)
-        if not csv_file:
-            raise FileNotFoundError(f"未找到 {perf} 的 CSV 文件")
-        return csv_file, perf
-    
-    else:
-        raise ValueError(f"不支持的平台：{platform_type}")
-
-
 def main() -> int:
     """主函数"""
+    parser = argparse.ArgumentParser(description='CSV 性能数据可视化工具')
+    parser.add_argument(
+        'perf_type',
+        choices=[t.lower() for t in PERF_CONFIG],
+        help='性能类型 (fps/cpu/mem/temp)'
+    )
+    parser.add_argument(
+        '-f', '--file',
+        type=Path,
+        help='指定 CSV 文件路径（默认自动查找最新文件）'
+    )
+    args = parser.parse_args()
+
+    perf_type = args.perf_type.upper()
+
     try:
-        # 检测平台
-        sys_platform = platform.system()
-        if sys_platform == 'Windows':
-            platform_type = 'win'
-        elif sys_platform == 'Darwin':
-            platform_type = 'mac'
+        # 获取 CSV 路径
+        if args.file:
+            csv_path = args.file
+            if not csv_path.exists():
+                print(f"文件不存在：{csv_path}")
+                return 1
         else:
-            print(f"不支持的平台：{sys_platform}")
-            return 1
-        
-        csv_path, perf_type = get_csv_path(platform_type, sys.argv[1:])
+            csv_file = find_latest_csv(get_report_dir() / perf_type)
+            if not csv_file:
+                print(f"未找到 {perf_type} 的 CSV 文件")
+                return 1
+            csv_path = csv_file
+
         print(f"CSV: {csv_path}, Type: {perf_type}")
-        
+
         data = parse_csv(csv_path, perf_type)
         if not data:
             print("无有效数据")
             return 1
-        
+
         output_path = get_report_dir() / perf_type / f"{datetime.now():%Y-%m-%d}.png"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         create_chart(data, perf_type, output_path)
         print(f"图表已保存：{output_path}")
         return 0
-        
+
     except ChartError as e:
         print(f"图表错误：{e}")
-        return 1
-    except FileNotFoundError as e:
-        print(f"文件错误：{e}")
-        return 1
-    except ValueError as e:
-        print(f"参数错误：{e}")
         return 1
     except Exception as e:
         print(f"未知错误：{e}")

@@ -42,6 +42,7 @@ class PackageInfo:
     pid: str = ''
     pid_cpu: str = ''
     uid: str = ''
+    uid_cpu: str = ''
 
 
 class PckCpuInfo:
@@ -251,7 +252,7 @@ class CpuCollector:
         
         top_file = Path(RuntimeData.package_save_path) / 'top.txt'
         with open(top_file, "a+", encoding="utf-8") as f:
-            f.write(f"{TimeUtils.getCurrentTime()} top info:\n{content}\n\n")
+            f.write(f"{TimeUtils.get_current_time()} top info:\n{content}\n\n")
         
         # 清理大文件
         if top_file.stat().st_size > self.MAX_FILE_SIZE_MB * 1024 * 1024:
@@ -287,7 +288,7 @@ class CpuCollector:
                 
                 # 构建数据行
                 row = [
-                    TimeUtils.getCurrentTime(),
+                    TimeUtils.get_current_time(),
                     str(parsed.device_cpu_rate),
                     parsed.user_rate,
                     parsed.system_rate,
@@ -360,8 +361,11 @@ def csv_to_list(csv_path: str, column: int = 7) -> list[float]:
         return [round(float(row[column])) for row in reader if len(row) > column]
 
 
-def chart_cpu(x: list, y: list, title: str, filename: str) -> None:
-    """绘制 CPU 图表"""
+def chart_cpu(x: list, y: list, title: str, filename: str, output_dir: str | None = None) -> None:
+    """绘制 CPU 图表
+    
+    :param output_dir: 输出目录，默认为 report/CPU
+    """
     if not HAS_PLT:
         logger.warning("matplotlib not available, skipping chart")
         return
@@ -369,12 +373,16 @@ def chart_cpu(x: list, y: list, title: str, filename: str) -> None:
     if not y or len(x) != len(y):
         raise ValueError("x and y must have same length")
     
+    if output_dir is None:
+        output_dir = str(Path(__file__).parent.parent / 'report' / 'CPU')
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    
     plt.plot(x, y)
     plt.xlabel('Time(Min)', color='r')
     plt.ylabel('CPU(*%)', color='r')
     plt.title(title, color='g')
     plt.grid(True)
-    plt.savefig(f'E:/report/{filename}.png')
+    plt.savefig(f'{output_dir}/{filename}.png')
     plt.show()
 
 
@@ -383,15 +391,18 @@ def chart_cpu(x: list, y: list, title: str, filename: str) -> None:
 def main_cpu(num: int) -> None:
     """测试 CPU 采集"""
     monitor = CpuMonitor(config.deviceId, [config.package], 20)
-    monitor.start(TimeUtils.getCurrentTimeUnderline())
+    monitor.start(TimeUtils.get_current_time_underline())
     time.sleep(20 * num)
     monitor.stop()
 
 
 def main_chart() -> None:
     """测试图表生成"""
-    csv_path = 'E:/mobileperf/results/com.imbb.banban.android/cpuInfo.csv'
-    y = csv_to_list(csv_path)
+    csv_path = Path(__file__).parent.parent / 'report' / 'CPU' / 'cpuInfo.csv'
+    if not csv_path.exists():
+        print(f"CSV 文件不存在：{csv_path}")
+        return
+    y = csv_to_list(str(csv_path))
     if len(y) == 30:
         chart_cpu(list(range(1, 31)), y, 'chatroom-CPU', 'banban')
 

@@ -4,7 +4,6 @@
 APK 重新签名工具
 支持通过命令行参数指定输入输出路径
 """
-import os
 import sys
 import subprocess
 import argparse
@@ -26,20 +25,20 @@ class KeystoreConfig:
     password: str
 
 
-# 预定义的密钥库配置
+# 预定义的密钥库配置（直接在此修改路径和密码）
 KEYSTORE_CONFIGS = {
     KeystoreType.SLP: KeystoreConfig(
-        path=r'D:\keystore\slp.keystore',
-        password='PLS_699'
+        path=r'E:\keystore\my-release-key.keystore',
+        password='imee2016'
     ),
     KeystoreType.RBP: KeystoreConfig(
-        path=r'D:\keystore\rbp.keystore',
-        password='634rbp'
+        path=r'E:\keystore\lovers.keystore',
+        password='lovers_7day'
     )
 }
 
-# 默认 SDK 路径
-DEFAULT_SDK_PATH = r'D:/build-tools/build-tools/29.0.2/apksigner.bat'
+# 默认 SDK 路径（直接在此修改）
+DEFAULT_SDK_PATH = r'D:\AndroidSDK\build-tools\28.0.3\apksigner.bat'
 
 
 def validate_file_exists(file_path: str, file_description: str) -> Path:
@@ -58,6 +57,8 @@ def validate_sdk_path(sdk_path: str) -> Path:
 def build_sign_command(sdk_path: str, keystore: KeystoreConfig, 
                        apk_path: str, out_path: str) -> list:
     """构建签名命令"""
+    if not keystore.password:
+        raise ValueError(f"密钥库 {keystore.path} 的密码未设置，请在 KEYSTORE_CONFIGS 中填写")
     return [
         sdk_path,
         'sign',

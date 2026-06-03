@@ -110,4 +110,3 @@ python mobilePerf/tools/testPhoneTime.py --mode cold --package com.example.app -
 - iOS 性能测试方案还在验证中
 - 部分工具需要配置 ADB 环境
 - Google Play 相关工具需要配置服务账号密钥
-

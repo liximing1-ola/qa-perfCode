@@ -4,6 +4,7 @@
 FPS 测试工具 - 自动滑动屏幕模拟用户操作
 """
 import argparse
+import platform
 import random
 import re
 import subprocess
@@ -41,8 +42,8 @@ def get_device() -> str | None:
 def get_package_name(device: str, activity: str = 'com.x.x.android.MainActivity') -> str:
     """获取当前运行的应用包名"""
     try:
-        cmd = f'adb -s {device} shell dumpsys window w | findstr / | findstr name='
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        cmd = ['adb', '-s', device, 'shell', 'dumpsys', 'window', 'w']
+        result = subprocess.run(cmd, capture_output=True, text=True)
         
         for line in result.stdout.splitlines():
             if activity in line:

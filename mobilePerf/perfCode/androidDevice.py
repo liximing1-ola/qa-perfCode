@@ -13,6 +13,7 @@ import threading
 import time
 import traceback
 from pathlib import Path
+from typing import Callable
 
 BaseDir = os.path.dirname(__file__)
 sys.path.append(os.path.join(BaseDir, '../..'))
@@ -30,7 +31,7 @@ class ADB:
     def __init__(self, device_id: str | None = None):
         self._device_id = device_id
         self._adb_path = self.get_adb_path()
-        self._logcat_handle: list = []
+        self._logcat_handle: list[Callable[[str], None]] = []
         self._logcat_running = False
         self._log_pipe = None
         self._system_version: str | None = None
@@ -97,8 +98,9 @@ class ADB:
     def list_devices() -> list[str]:
         """获取已连接的设备列表"""
         try:
+            adb_path = ADB.get_adb_path()
             result = subprocess.run(
-                ['adb', 'devices'],
+                [adb_path, 'devices'],
                 capture_output=True,
                 text=True,
                 timeout=10
@@ -138,8 +140,9 @@ class ADB:
     def check_adb_normal() -> bool:
         """检查 ADB 服务是否正常"""
         try:
+            adb_path = ADB.get_adb_path()
             result = subprocess.run(
-                ['adb', 'devices'],
+                [adb_path, 'devices'],
                 capture_output=True,
                 text=True,
                 timeout=10
@@ -162,14 +165,16 @@ class ADB:
     def kill_server() -> None:
         """停止 ADB 服务"""
         logger.warning("Killing ADB server...")
-        subprocess.run(['adb', 'kill-server'], capture_output=True)
+        adb_path = ADB.get_adb_path()
+        subprocess.run([adb_path, 'kill-server'], capture_output=True)
     
     @staticmethod
     def start_server() -> None:
         """启动 ADB 服务"""
         ADB._kill_5037_process()
         logger.warning("Starting ADB server...")
-        subprocess.run(['adb', 'start-server'], capture_output=True)
+        adb_path = ADB.get_adb_path()
+        subprocess.run([adb_path, 'start-server'], capture_output=True)
     
     @staticmethod
     def _kill_5037_process() -> None:
@@ -205,7 +210,7 @@ class ADB:
                             capture_output=True
                         )
                     break
-        except Exception as e:
+        except (OSError, ValueError, subprocess.SubprocessError) as e:
             logger.error(f"Failed to kill 5037 process: {e}")
 
     def _run_cmd(
@@ -225,7 +230,7 @@ class ADB:
         :param retry: 重试次数
         :return: 同步模式返回输出字符串，异步模式返回 Popen 对象
         """
-        # 构建命令
+        # 构建命令列表
         base_cmd = [self._adb_path]
         if self._device_id:
             base_cmd.extend(['-s', self._device_id])
@@ -238,11 +243,10 @@ class ADB:
         for attempt in range(retry):
             try:
                 process = subprocess.Popen(
-                    cmd_str,
+                    base_cmd,
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    shell=True,
                     text=True
                 )
                 
@@ -273,7 +277,7 @@ class ADB:
                 
                 return result.strip() if result else ""
                 
-            except Exception as e:
+            except (OSError, subprocess.SubprocessError) as e:
                 logger.error(f"Command failed: {e}")
                 if attempt < retry - 1:
                     time.sleep(0.5)
@@ -323,11 +327,11 @@ class ADB:
         try:
             uptime = self._run_cmd('shell', 'cat /proc/uptime', retry=1)
             if uptime and RuntimeData.package_save_path:
-                log_file = os.path.join(RuntimeData.package_save_path, "uptime.txt")
+                log_file = Path(RuntimeData.package_save_path) / "uptime.txt"
                 with open(log_file, "a+", encoding="utf-8") as f:
                     f.write(f"{TimeUtils.get_current_time_underline()} /proc/uptime:{uptime}\n")
                 self.before_connect = True
-        except Exception as e:
+        except (IOError, OSError) as e:
             logger.error(f"Failed to log reconnect: {e}")
 
     def _logcat_worker(self, save_dir: str, params: str = "") -> None:
@@ -355,7 +359,7 @@ class ADB:
                 for handler in self._logcat_handle:
                     try:
                         handler(log)
-                    except Exception as e:
+                    except (ValueError, TypeError, OSError) as e:
                         logger.error(f"Logcat handler error: {e}")
                 
                 logs.append(log)
@@ -373,13 +377,13 @@ class ADB:
                     file_time = TimeUtils.get_current_time_underline()
                     file_line_count = 0
                     
-            except Exception as e:
+            except (IOError, OSError, ValueError) as e:
                 logger.error(f"Logcat thread error: {e}")
                 logger.debug(traceback.format_exc())
     
     def _save_logs(self, save_dir: str, filename: str, logs: list[str]) -> None:
         """保存日志到文件"""
-        filepath = os.path.join(save_dir, filename)
+        filepath = Path(save_dir) / filename
         with open(filepath, 'a+', encoding="utf-8") as f:
             f.write('\n'.join(logs) + '\n')
 
@@ -399,7 +403,7 @@ class ADB:
         # 清除缓冲区
         try:
             self.run_shell_cmd(f'logcat -c {params}')
-        except Exception as e:
+        except (subprocess.SubprocessError, OSError) as e:
             logger.warning(f"Failed to clear logcat buffer: {e}")
         
         self._logcat_running = True
@@ -423,7 +427,7 @@ class ADB:
                 if self._log_pipe.poll() is None:
                     self._log_pipe.terminate()
                     self._log_pipe.wait(timeout=2)
-            except Exception as e:
+            except (OSError, subprocess.SubprocessError) as e:
                 logger.warning(f"Error stopping logcat: {e}")
 
     def wait_for_device(self, timeout: int = 180) -> bool:
@@ -454,11 +458,9 @@ class ADB:
             return None
         
         file_size = src.stat().st_size
-        # 处理路径空格
-        src_quoted = f'"{src_path}"' if " " in src_path else src_path
         
         for attempt in range(retries):
-            result = self.run_adb_cmd('push', src_quoted, dst_path, timeout=30)
+            result = self.run_adb_cmd('push', src_path, dst_path, timeout=30)
             if result and str(file_size) in result:
                 return result
             if result and 'No such file or directory' in result:
@@ -503,7 +505,7 @@ class ADB:
         :return: 命令执行结果
         """
         if use_exec_out:
-            return self.run_adb_cmd(f'exec-out screencap -p {save_path}', timeout=20)
+            return self._run_cmd('exec-out', 'screencap', '-p', save_path, timeout=20)
         return self.run_shell_cmd(f'screencap -p {save_path}', timeout=20)
 
     def remove(self, path: str, recursive: bool = False) -> str | None:
@@ -574,7 +576,7 @@ class ADB:
                 continue
             
             modify_time = match.group(1)
-            modify_ts = TimeUtils.getTimeStamp(modify_time, "%Y-%m-%d %H:%M")
+            modify_ts = TimeUtils.parse_time(modify_time, "%Y-%m-%d %H:%M")
             
             if start_ts < modify_ts < end_ts:
                 filename = line.split()[-1]
@@ -601,7 +603,7 @@ class ADB:
             return False
         
         modify_time = match.group(1)
-        modify_ts = TimeUtils.getTimeStamp(modify_time, "%Y-%m-%d %H:%M")
+        modify_ts = TimeUtils.parse_time(modify_time, "%Y-%m-%d %H:%M")
         threshold_ts = time.time() - days * 24 * 60 * 60
         
         is_old = modify_ts < threshold_ts
@@ -921,7 +923,7 @@ class ADB:
         :param save_dir: 本地保存目录
         :return: 本地文件路径
         """
-        timestamp = TimeUtils.getCurrentTimeUnderline()
+        timestamp = TimeUtils.get_current_time_underline()
         device_path = f"/data/local/tmp/{package}_dumpheap_{timestamp}.hprof"
             
         self.run_shell_cmd(f"am dumpheap {package} {device_path}")

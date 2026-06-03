@@ -1,41 +1,25 @@
-#!/usr/bin/python
-#
-# Copyright 2014 Google Inc. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the 'License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-"""Uploads apk to alpha track and updates its listing properties."""
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Upload APK/AAB to Google Play and update listing properties."""
 import argparse
 import mimetypes
 import socket
 import sys
 from pathlib import Path
 
-import httplib2
-from apiclient.discovery import build
+from google.auth.exceptions import RefreshError
 from googleapiclient.http import MediaFileUpload
-from oauth2client import client
-from oauth2client.service_account import ServiceAccountCredentials
 
+from gp_utils import create_service
 from google_translater import GoogleTranslator, TranslationError
 
+# 上传超时（7天，Google Play 大文件上传需要较长超时）
+UPLOAD_TIMEOUT_SECONDS = 7 * 24 * 60 * 60
+
 # 设置超时和 MIME 类型
-socket.setdefaulttimeout(7 * 24 * 60 * 60)
+socket.setdefaulttimeout(UPLOAD_TIMEOUT_SECONDS)
 mimetypes.add_type("application/octet-stream", ".apk")
 mimetypes.add_type("application/octet-stream", ".aab")
-
-# 发布轨道
-TRACK_PRODUCTION = 'production'
 
 # 支持的语言列表
 SUPPORTED_LANGUAGES = [
@@ -46,20 +30,15 @@ SUPPORTED_LANGUAGES = [
 
 
 def create_release_notes(base_note: str, translator: GoogleTranslator) -> list[dict]:
-    """创建多语言发布说明
-    
-    :param base_note: 基础说明（英文）
-    :param translator: 翻译器
-    :return: 多语言说明列表
-    """
+    """创建多语言发布说明。"""
     if not base_note:
         return []
-    
+
     release_notes = []
-    
+
     for lang in SUPPORTED_LANGUAGES:
         note = {'language': lang, 'text': ''}
-        
+
         try:
             if lang.startswith('en'):
                 note['text'] = base_note
@@ -75,30 +54,23 @@ def create_release_notes(base_note: str, translator: GoogleTranslator) -> list[d
         except TranslationError as e:
             print(f"Warning: Failed to translate to {lang}: {e}")
             note['text'] = base_note
-        
+
         # 检查长度限制
         if len(note['text']) > 500:
-            print(f"Error: {lang} text too long ({len(note['text'])} > 500)")
-            sys.exit(1)
-        
+            raise ValueError(f"{lang} release note too long ({len(note['text'])} > 500 chars)")
+
         release_notes.append(note)
-    
+
     return release_notes
 
 
 def upload_bundle(service, package_name: str, apk_file: str) -> dict:
-    """上传 AAB 文件
-    
-    :param service: Google Play 服务
-    :param package_name: 包名
-    :param apk_file: AAB 文件路径
-    :return: 上传结果
-    """
+    """上传 AAB 文件。"""
     # 创建编辑
     edit_request = service.edits().insert(body={}, packageName=package_name)
     result = edit_request.execute()
     edit_id = result['id']
-    
+
     # 准备上传
     media = MediaFileUpload(apk_file, chunksize=1024*1024, resumable=True)
     request = service.edits().bundles().upload(
@@ -107,11 +79,11 @@ def upload_bundle(service, package_name: str, apk_file: str) -> dict:
         packageName=package_name,
         media_body=media
     )
-    
+
     # 上传并显示进度
     response = None
     spinner = ['—', '\\', '|', '/']
-    
+
     while response is None:
         status, response = request.next_chunk()
         if status:
@@ -120,12 +92,12 @@ def upload_bundle(service, package_name: str, apk_file: str) -> dict:
             symbol = spinner[(progress - 1) % 4]
             sys.stdout.write(f"\r[{symbol}]{progress:3d}%|{bar}| {progress}/100")
             sys.stdout.flush()
-    
+
     print(f"\nVersion code {response['versionCode']} uploaded")
-    
+
     # 提交编辑
     service.edits().commit(editId=edit_id, packageName=package_name).execute()
-    
+
     return response
 
 
@@ -134,23 +106,17 @@ def update_track(
     package_name: str,
     version_code: int,
     draft_name: str,
-    release_notes: list[dict]
+    release_notes: list[dict],
+    track: str = 'production'
 ) -> None:
-    """更新发布轨道
-    
-    :param service: Google Play 服务
-    :param package_name: 包名
-    :param version_code: 版本号
-    :param draft_name: 草稿名称
-    :param release_notes: 发布说明
-    """
+    """更新发布轨道。"""
     edit_request = service.edits().insert(body={}, packageName=package_name)
     result = edit_request.execute()
     edit_id = result['id']
-    
+
     track_response = service.edits().tracks().update(
         editId=edit_id,
-        track=TRACK_PRODUCTION,
+        track=track,
         packageName=package_name,
         body={
             'releases': [{
@@ -161,76 +127,72 @@ def update_track(
             }]
         }
     ).execute()
-    
+
     print(f"Track {track_response['track']} updated")
-    
+
     service.edits().commit(editId=edit_id, packageName=package_name).execute()
     print("Release notes committed")
 
 
-def create_service() -> build:
-    """创建 Google Play 服务"""
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(
-        'key.json',
-        scopes=['https://www.googleapis.com/auth/androidpublisher']
-    )
-    http = httplib2.Http()
-    http.redirect_codes = http.redirect_codes - {308}
-    http = credentials.authorize(http)
-    
-    return build('androidpublisher', 'v3', http=http)
-
-
 def main() -> int:
     """主函数"""
-    parser = argparse.ArgumentParser(description='Upload APK/AAB to Google Play')
-    parser.add_argument('package_name', help='Package name, e.g., com.android.sample')
-    parser.add_argument('apk_file', nargs='?', default='', help='APK/AAB file path')
-    parser.add_argument('draft_name', nargs='?', default='最新版', help='Draft name')
-    parser.add_argument('release_note', nargs='?', default='', help='Release notes (English)')
+    parser = argparse.ArgumentParser(description='上传 APK/AAB 到 Google Play')
+    parser.add_argument('package_name', help='包名，如 com.android.sample')
+    parser.add_argument('apk_file', nargs='?', default='', help='APK/AAB 文件路径')
+    parser.add_argument('draft_name', nargs='?', default='最新版', help='草稿名称')
+    parser.add_argument('release_note', nargs='?', default='', help='发布说明（英文）')
+    parser.add_argument('-k', '--key-file', default='key.json', help='服务账号密钥文件路径')
+    parser.add_argument('--track', default='production', help='发布轨道（默认 production）')
     args = parser.parse_args()
-    
+
     # 验证文件
     if args.apk_file and not Path(args.apk_file).exists():
-        print(f"Error: File not found: {args.apk_file}")
+        print(f"错误：文件不存在：{args.apk_file}")
         return 1
-    
+
     try:
         # 创建服务
-        service = create_service()
-        
+        service = create_service(args.key_file)
+
         # 上传文件
         if args.apk_file:
-            print("Uploading bundle...")
+            print("正在上传 bundle...")
             response = upload_bundle(service, args.package_name, args.apk_file)
             version_code = response['versionCode']
         else:
             print("Warning: No file to upload")
             return 0
-        
+
         # 翻译并更新发布说明
         if args.release_note:
-            print("\nTranslating release notes...")
+            print("\n正在翻译发布说明...")
             translator = GoogleTranslator()
             release_notes = create_release_notes(args.release_note, translator)
-            
-            print("\nUpdating track...")
+
+            print("\n正在更新 track...")
             update_track(
                 service,
                 args.package_name,
                 version_code,
                 args.draft_name,
-                release_notes
+                release_notes,
+                args.track
             )
-        
-        print("\nDone!")
+
+        print("\n完成！")
         return 0
-        
-    except client.AccessTokenRefreshError:
-        print("Error: Credentials expired or revoked")
+
+    except RefreshError:
+        print("错误：凭证已过期或被撤销")
+        return 1
+    except ValueError as e:
+        print(f"错误：{e}")
+        return 1
+    except FileNotFoundError as e:
+        print(f"错误：密钥文件不存在：{e}")
         return 1
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"错误：{e}")
         return 1
 
 

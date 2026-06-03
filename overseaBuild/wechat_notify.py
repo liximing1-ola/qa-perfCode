@@ -5,6 +5,7 @@
 """
 import argparse
 import json
+import os
 import sys
 from dataclasses import dataclass
 
@@ -149,11 +150,12 @@ def parse_args() -> BuildInfo:
     parser.add_argument('ci_num', help='CI 编号')
     parser.add_argument('user', help='构建用户')
     parser.add_argument('branch', help='构建分支')
-    parser.add_argument('--webhook-key', default='', help='企业微信 Webhook Key')
+    parser.add_argument('--webhook-key', default='',
+                        help='企业微信 Webhook Key')
     
     args = parser.parse_args()
     
-    return BuildInfo(
+    return args.webhook_key, BuildInfo(
         build_num=args.build_num,
         change_log=args.change_log if args.change_log != "no changes" else "",
         build_type=args.build_type,
@@ -179,10 +181,13 @@ def main() -> int:
             user=sys.argv[8],
             branch=sys.argv[9] if len(sys.argv) > 9 else ""
         )
-        webhook_key = ''
+        webhook_key = ''  # 直接在此填写 Webhook Key，例如：webhook_key = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
     else:
-        info = parse_args()
-        webhook_key = ''
+        webhook_key, info = parse_args()
+    
+    if not webhook_key:
+        print("错误：未提供 Webhook Key，请在代码中直接填写或通过 --webhook-key 参数传入")
+        return 1
     
     notifier = WechatNotifier(webhook_key)
     success = notifier.notify(info)

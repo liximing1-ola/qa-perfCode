@@ -1,23 +1,34 @@
 @echo off
-chcp 65001 >nul
+cls
 echo.
 echo =========================================
-echo         APK 构建工具集
+echo         APK Build Toolset
 echo =========================================
 echo.
-echo [againBuild] APK 处理工具
-echo   againKey      - 重签名 APK
-echo   changeApk     - 反编译/打包 APK
-echo   changeRes     - 修改 APP 资源
+echo [againBuild] APK Processing Tools
+echo   againKey      - Re-sign APK
+echo   changeApk     - Decompile/Compile APK
+echo   changeRes     - Modify APP Resources
 echo.
-echo [DaBao] 渠道包工具
-echo   batchChannelV2    - 单个渠道包操作
-echo   changeChannelList - 批量生成渠道包
-echo   getAppInfo        - 查看 APK 信息
+echo [DaBao] Channel Packaging Tools
+echo   batchChannelV2    - Single channel ops
+echo   changeChannelList - Batch channel build
+echo   getAppInfo        - View APK info
 echo.
 echo =========================================
 echo.
 
-:: 切换到脚本所在目录
+:: Switch to project directory (works from any location)
 cd /d "%~dp0"
+echo Current: %cd%
+echo.
+echo Usage:
+echo   python againBuild\againKey.py    - Re-sign APK
+echo   python againBuild\changeApk.py   - Decompile/Compile APK
+echo   python againBuild\changeRes.py   - Modify resources
+echo   python DaBao\batchChannelV2.py   - Channel ops
+echo   python DaBao\changeChannelList.py - Batch build
+echo   python DaBao\getAppInfo.py      - APK info
+echo.
+
 cmd /k

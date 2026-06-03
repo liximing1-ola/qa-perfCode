@@ -6,8 +6,14 @@
 # $1: 要上传的文件路径(ipa/apk)
 #
 
-readonly api_key='a229e28dde798c09fd906f854fdc212a'  # 国内api_key
+readonly api_key="a229e28dde798c09fd906f854fdc212a"  # 国内api_key
 readonly file=$1
+
+# check api_key
+if [ -z "$api_key" ]; then
+    echo "错误：api_key 未填写，请在脚本第 9 行直接设置"
+    exit 1
+fi
 
 # Display log. 1=enable, 0=disable
 LOG_ENABLE=1

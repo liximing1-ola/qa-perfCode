@@ -61,6 +61,10 @@ class LogcatMonitor(Monitor):
         self.running = False
         logger.debug("Logcat monitor stopped")
 
+    def save(self) -> None:
+        """保存采集数据（logcat 数据由 _logcat_worker 实时写入文件，此处无需额外操作）"""
+        pass
+
     def set_exception_tags(self, tags: list[str]) -> None:
         """设置异常日志标签列表"""
         self.exception_tags = tags
@@ -93,7 +97,7 @@ class LogcatMonitor(Monitor):
 
         # 获取进程堆栈
         if RuntimeData.old_pid:
-            stack_file = Path(RuntimeData.package_save_path) / f'process_stack_{self.package}_{TimeUtils.getCurrentTimeUnderline()}.log'
+            stack_file = Path(RuntimeData.package_save_path) / f'process_stack_{self.package}_{TimeUtils.get_current_time_underline()}.log'
             try:
                 self.device.adb.dump_stack(RuntimeData.old_pid, str(stack_file))
             except Exception as e:
@@ -153,7 +157,7 @@ class LaunchTimeHandler:
 
         return {
             'timestamp': time.time(),
-            'datetime': TimeUtils.formatTimeStamp(time.time()),
+            'datetime': TimeUtils.format_timestamp(time.time()),
             'activity': parts[0],
             'this_time': this_time,
             'total_time': total_time,
