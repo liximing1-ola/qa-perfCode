@@ -22,27 +22,21 @@ class RuntimeData:
     top_dir: str | None = None
     config_dic: dict[str, Any] = field(default_factory=dict)
     
-    # 线程安全的退出信号（类级别共享）
-    _exit_event: threading.Event = field(default_factory=threading.Event, init=False, repr=False)
+    # 线程安全的退出信号（类级别共享，所有实例共用同一个 Event）
+    _exit_signal: threading.Event = field(default_factory=threading.Event, init=False, repr=False)
     
     @classmethod
     def is_exit(cls) -> bool:
         """检查是否收到退出信号"""
-        if not hasattr(cls, '_exit_event_inst'):
-            cls._exit_event_inst = threading.Event()
-        return cls._exit_event_inst.is_set()
+        return cls._exit_signal.is_set()
     
     @classmethod
     def set_exit(cls) -> None:
         """设置退出信号"""
-        if not hasattr(cls, '_exit_event_inst'):
-            cls._exit_event_inst = threading.Event()
-        cls._exit_event_inst.set()
+        cls._exit_signal.set()
     
     @classmethod
     def clear_exit(cls) -> None:
         """清除退出信号"""
-        if not hasattr(cls, '_exit_event_inst'):
-            cls._exit_event_inst = threading.Event()
-        cls._exit_event_inst.clear()
+        cls._exit_signal.clear()
 

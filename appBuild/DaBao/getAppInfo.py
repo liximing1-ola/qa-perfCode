@@ -67,12 +67,6 @@ def main() -> int:
     except ValueError as e:
         print(f"解析错误：{e}")
         return 1
-    except UnicodeDecodeError as e:
-        print(f"编码错误：{e}")
-        return 1
-    except subprocess.TimeoutExpired:
-        print("aapt 执行超时")
-        return 1
     except Exception as e:
         print(f"未知错误：{e}")
         return 1

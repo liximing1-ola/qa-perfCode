@@ -17,7 +17,7 @@ def decompile(apk_path: Path) -> int:
 
     cmd = ["java", "-jar", APKTOOL, "d", "-a", str(apk_path)]
     try:
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
         print(f"解包完成：{apk_path}")
         return 0
     except subprocess.CalledProcessError as e:
@@ -37,7 +37,7 @@ def compile(source_dir: Path, output_apk: Path | None = None) -> int:
     print(f"输出路径：{output_apk}")
     cmd = ["java", "-jar", APKTOOL, "b", str(source_dir), "-c", "-o", str(output_apk)]
     try:
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
         print(f"打包完成：{output_apk}")
         return 0
     except subprocess.CalledProcessError as e:

@@ -3,7 +3,6 @@
 """Google Play API 共享工具"""
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from google.auth.exceptions import RefreshError
 
 # Google Play Developer API .scope
 SCOPE = 'https://www.googleapis.com/auth/androidpublisher'

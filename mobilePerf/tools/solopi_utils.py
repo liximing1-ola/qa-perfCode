@@ -11,7 +11,6 @@ from solopi_config import ADB_REMOTE_BASE, DATA_TYPES, SOLOPI_PATH
 
 class ADBError(Exception):
     """ADB 执行异常"""
-    pass
 
 
 def run_adb(cmd: list[str], timeout: int = 30) -> tuple[int, str, str]:

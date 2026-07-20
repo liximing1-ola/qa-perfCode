@@ -5,14 +5,11 @@
 
 用于测试私聊送礼和房间送礼功能
 """
-from random import random, randrange
 import json
-import os
 import traceback
 
 import requests
 import urllib3
-from typing import List
 
 # 服务器地址（直接在此修改）
 BASE_URL = 'https://114.55.3.96'
@@ -38,6 +35,45 @@ def get_token(uid: int) -> str:
         raise ValueError(f"获取 token 失败: {data}")
     
     return data['data']
+
+
+def _build_headers(
+    token: str,
+    user_agent: str,
+    brand: str,
+    model: str,
+    tag: str,
+    oaid: str,
+    did: str,
+    content_type: str = 'application/x-www-form-urlencoded',
+) -> dict:
+    """构建公共请求头"""
+    return {
+        'user-agent': user_agent,
+        'user-brand': brand,
+        'user-model': model,
+        'user-tag': tag,
+        'user-idfa': '',
+        'user-mac': tag,
+        'content-type': content_type,
+        'user-channel': 'slp',
+        'user-oaid': oaid,
+        'user-issimulator': 'false',
+        'user-machine': model,
+        'user-did': did,
+        'user-isroot': 'false',
+        'host': BASE_URL.replace('https://', '').replace('http://', ''),
+        'user-token': token,
+        'user-imei': tag,
+        'user-language': 'zh_CN',
+    }
+
+
+def _send_pay_request(url: str, params: dict, headers: dict, payload: dict) -> dict:
+    """发送送礼请求并返回结果"""
+    response = requests.post(url, params=params, headers=headers, data=payload, verify=False)
+    response.raise_for_status()
+    return response.json()
 
 
 def pay_chat(to_uid: int, num: int = 1, gift_id: int = 545, price: int = 10, uid: int = 200254964) -> dict:
@@ -90,35 +126,23 @@ def pay_chat(to_uid: int, num: int = 1, gift_id: int = 545, price: int = 10, uid
         "params": json.dumps(gift_params)
     }
     
-    headers = {
-        'user-agent': 'Mozilla/5.0 (Linux; Android 13; 22041216C Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/104.0.5112.97 Mobile Safari/537.36 / Xs android V5.37.0.0 / Js V1.0.0.0 / Login V1736852068',
-        'user-brand': 'Redmi',
-        'user-model': '22041216C',
-        'user-tag': '3299135d51c6a8ee',
-        'user-idfa': '',
-        'user-mac': '3299135d51c6a8ee',
-        'content-type': 'application/x-www-form-urlencoded;charset=utf-8',
-        'user-channel': 'slp',
-        'user-oaid': '017d5cce25c04e02',
-        'user-issimulator': 'false',
-        'user-machine': '22041216C',
-        'user-did': 'DU2MnBVXQ1l6p_rnQH02rwzzHUF2Gn0oyEaf',
-        'user-isroot': 'false',
-        'host': BASE_URL.replace('https://', '').replace('http://', ''),
-        'user-token': token,
-        'user-imei': '3299135d51c6a8ee',
-        'user-language': 'zh_CN'
-    }
+    headers = _build_headers(
+        token=token,
+        user_agent='Mozilla/5.0 (Linux; Android 13; 22041216C Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/104.0.5112.97 Mobile Safari/537.36 / Xs android V5.37.0.0 / Js V1.0.0.0 / Login V1736852068',
+        brand='Redmi',
+        model='22041216C',
+        tag='3299135d51c6a8ee',
+        oaid='017d5cce25c04e02',
+        did='DU2MnBVXQ1l6p_rnQH02rwzzHUF2Gn0oyEaf',
+        content_type='application/x-www-form-urlencoded;charset=utf-8',
+    )
     
-    response = requests.post(url, params=params, headers=headers, data=payload, verify=False)
-    response.raise_for_status()
-    
-    result = response.json()
+    result = _send_pay_request(url, params, headers, payload)
     print(f"私聊送礼结果: {result}")
     return result
 
 
-def pay_room(to_uid: List[int], gift_num: int = 1, gift_id: int = 211118, 
+def pay_room(to_uid: list[int], gift_num: int = 1, gift_id: int = 211118, 
              price: int = 10, uid: int = 200253117, rid: int = 100504618) -> dict:
     """房间送礼
     
@@ -182,31 +206,17 @@ def pay_room(to_uid: List[int], gift_num: int = 1, gift_id: int = 211118,
         "params": json.dumps(gift_params)
     }
     
-    headers = {
-        'user-agent': 'Mozilla/5.0 (Linux; Android 11; PDAM10 Build/RKQ1.200903.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/97.0.4692.98 Mobile Safari/537.36 / Xs android V5.50.0.0 / Js V1.0.0.0 / Login V1741677935',
-        'user-brand': 'OPPO',
-        'user-model': 'PDAM10',
-        'user-tag': '2845cd497cd7695e',
-        'user-idfa': '',
-        'user-mac': '2845cd497cd7695e',
-        'content-type': 'application/x-www-form-urlencoded',
-        'user-channel': 'slp',
-        'user-oaid': '9A1B40843973470ABB2F6623C6B8B20130a044983298cfb5a9726c149f980195',
-        'user-issimulator': 'false',
-        'user-machine': 'PDAM10',
-        'user-did': 'DUcqnoi0lkCSzptdyOOGKmNOpxQ8_AeLasc2',
-        'user-isroot': 'false',
-        'host': BASE_URL.replace('https://', '').replace('http://', ''),
-        'user-token': token,
-        'user-imei': '2845cd497cd7695e',
-        'user-language': 'zh_CN'
-    }
+    headers = _build_headers(
+        token=token,
+        user_agent='Mozilla/5.0 (Linux; Android 11; PDAM10 Build/RKQ1.200903.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/97.0.4692.98 Mobile Safari/537.36 / Xs android V5.50.0.0 / Js V1.0.0.0 / Login V1741677935',
+        brand='OPPO',
+        model='PDAM10',
+        tag='2845cd497cd7695e',
+        oaid='9A1B40843973470ABB2F6623C6B8B20130a044983298cfb5a9726c149f980195',
+        did='DUcqnoi0lkCSzptdyOOGKmNOpxQ8_AeLasc2',
+    )
     
-    response = requests.post(url, params=params, headers=headers, data=payload, verify=False)
-    response.raise_for_status()
-    
-    result = response.json()
-    return result
+    return _send_pay_request(url, params, headers, payload)
 
 
 if __name__ == '__main__':

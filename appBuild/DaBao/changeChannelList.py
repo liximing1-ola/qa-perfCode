@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """渠道包批量打包工具"""
 import argparse
-import os
 import subprocess
 import sys
 from datetime import datetime

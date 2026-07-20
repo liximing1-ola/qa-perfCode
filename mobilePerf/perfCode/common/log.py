@@ -5,7 +5,6 @@
 """
 import logging
 import logging.handlers
-import os
 import re
 import sys
 from pathlib import Path

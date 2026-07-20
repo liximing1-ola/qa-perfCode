@@ -15,8 +15,7 @@ import traceback
 from pathlib import Path
 from typing import Callable
 
-BaseDir = os.path.dirname(__file__)
-sys.path.append(os.path.join(BaseDir, '../..'))
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from mobilePerf.perfCode.common.log import logger
 from mobilePerf.perfCode.common.utils import TimeUtils
 from mobilePerf.perfCode.globaldata import RuntimeData
@@ -116,7 +115,7 @@ class ADB:
             
             logger.debug(f"Found devices: {devices}")
             return devices
-        except (subprocess.TimeoutExpired, Exception) as e:
+        except Exception as e:
             logger.error(f"Failed to list devices: {e}")
             return []
 
@@ -157,7 +156,7 @@ class ADB:
                 logger.warning("ADB server error, port 5037 may be occupied")
                 return False
             return True
-        except (subprocess.TimeoutExpired, Exception) as e:
+        except Exception as e:
             logger.error(f"ADB check failed: {e}")
             return False
     
@@ -398,7 +397,7 @@ class ADB:
             logger.warning('Logcat already running')
             return
         
-        os.makedirs(save_dir, exist_ok=True)
+        Path(save_dir).mkdir(parents=True, exist_ok=True)
         
         # 清除缓冲区
         try:
@@ -537,6 +536,29 @@ class ADB:
         """
         return self.run_shell_cmd(f'mkdir -p {path}')
 
+    def _parse_ls(self, output: str) -> list[tuple[str, str | None]]:
+        """解析 ls -l 输出，返回 (filename, mod_time_str) 列表
+        
+        :param output: ls -l 命令输出
+        :return: 元组列表 (文件名, 修改时间字符串或 None)
+        """
+        if not output or 'No such file or directory' in output:
+            return []
+        
+        time_pattern = re.compile(r'\S+\s+(\d+-\d+-\d+\s+\d+:\d+)\s+\S+')
+        entries = []
+        
+        for line in output.replace('\r\r\n', '\n').split('\n'):
+            parts = line.split()
+            if len(parts) < 3 or parts[0] == 'total':
+                continue
+            filename = parts[-1]
+            match = time_pattern.search(line)
+            mod_time = match.group(1) if match else None
+            entries.append((filename, mod_time))
+        
+        return entries
+
     def list_dir(self, path: str) -> list[str]:
         """列出目录内容
         
@@ -544,16 +566,7 @@ class ADB:
         :return: 文件名列表
         """
         result = self.run_shell_cmd(f'ls -l {path}')
-        if not result or 'No such file or directory' in result:
-            return []
-        
-        files = []
-        for line in result.replace('\r\r\n', '\n').split('\n'):
-            parts = line.split()
-            # 跳过 total 行和空行
-            if len(parts) > 2 and parts[0] != "total":
-                files.append(parts[-1])
-        return files
+        return [name for name, _ in self._parse_ls(result)]
 
     def list_files_by_time(self, path: str, start_ts: float, end_ts: float) -> list[str]:
         """列出指定时间范围内的文件
@@ -564,22 +577,13 @@ class ADB:
         :return: 文件路径列表
         """
         result = self.run_shell_cmd(f'ls -l {path}')
-        if not result or 'No such file or directory' in result:
-            return []
-        
         files = []
-        time_pattern = re.compile(r'\S+\s+(\d+-\d+-\d+\s+\d+:\d+)\s+\S+')
         
-        for line in result.replace('\r\r\n', '\n').split('\n'):
-            match = time_pattern.search(line)
-            if not match:
+        for filename, mod_time in self._parse_ls(result):
+            if not mod_time:
                 continue
-            
-            modify_time = match.group(1)
-            modify_ts = TimeUtils.parse_time(modify_time, "%Y-%m-%d %H:%M")
-            
+            modify_ts = TimeUtils.parse_time(mod_time, "%Y-%m-%d %H:%M")
             if start_ts < modify_ts < end_ts:
-                filename = line.split()[-1]
                 files.append(f'{path}/{filename}')
                 logger.debug(f"Matched file: {filename}")
         
@@ -593,17 +597,16 @@ class ADB:
         :return: 是否超过
         """
         result = self.run_shell_cmd(f'ls -l {path}')
-        if not result or 'No such file or directory' in result:
+        entries = self._parse_ls(result)
+        
+        if not entries:
             return False
         
-        time_pattern = re.compile(r'\S+\s+(\d+-\d+-\d+\s+\d+:\d+)\s+\S+')
-        match = time_pattern.search(result)
-        
-        if not match:
+        filename, mod_time = entries[0]
+        if not mod_time:
             return False
         
-        modify_time = match.group(1)
-        modify_ts = TimeUtils.parse_time(modify_time, "%Y-%m-%d %H:%M")
+        modify_ts = TimeUtils.parse_time(mod_time, "%Y-%m-%d %H:%M")
         threshold_ts = time.time() - days * 24 * 60 * 60
         
         is_old = modify_ts < threshold_ts
@@ -743,14 +746,7 @@ class ADB:
                 continue
             
             activity_info = parts[1]
-            # 处理不同格式
-            if '/' in activity_info:
-                if activity_info.endswith('/'):
-                    activity = activity_info.rstrip('/')
-                else:
-                    activity = activity_info
-            else:
-                activity = activity_info
+            activity = activity_info.rstrip('/')
             
             logger.debug(f"Activity top: {activity}")
             return activity
@@ -1115,9 +1111,8 @@ class ADB:
             
         :param mode: 重启模式 (bootloader/recovery/None)
         """
-        if mode:
-            return self.run_adb_cmd('reboot', mode)
-        return self.run_adb_cmd('reboot')
+        args = [mode] if mode else []
+        return self.run_adb_cmd('reboot', *args)
 
 
 class AndroidDevice:
@@ -1160,7 +1155,7 @@ class AndroidDevice:
 
     def is_connected(self) -> bool:
         """检查设备是否已连接"""
-        return self.adb is not None and self.adb.is_connected()
+        return self.adb is not None and ADB.is_connected(self.device_id)
 
 
 # ==================== 测试入口 ====================

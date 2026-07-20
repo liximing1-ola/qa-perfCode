@@ -7,6 +7,7 @@ APP 启动时间测试工具
 import time
 import subprocess
 import argparse
+import sys
 from statistics import mean
 
 
@@ -165,5 +166,5 @@ def main():
 
 
 if __name__ == '__main__':
-    exit(main())
+    sys.exit(main())
 

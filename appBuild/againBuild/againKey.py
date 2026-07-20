@@ -49,11 +49,6 @@ def validate_file_exists(file_path: str, file_description: str) -> Path:
     return path
 
 
-def validate_sdk_path(sdk_path: str) -> Path:
-    """验证 SDK 路径是否存在"""
-    return validate_file_exists(sdk_path, "SDK path")
-
-
 def build_sign_command(sdk_path: str, keystore: KeystoreConfig, 
                        apk_path: str, out_path: str) -> list:
     """构建签名命令"""
@@ -77,9 +72,8 @@ def build_verify_command(sdk_path: str, apk_path: str) -> list:
 def execute_command(cmd: list, operation_name: str) -> None:
     """执行命令并处理错误"""
     try:
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
         print(f"{operation_name} completed successfully")
-        return result
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"{operation_name} failed: {e.stderr}") from e
 
@@ -134,7 +128,7 @@ def main() -> int:
         validate_file_exists(args.input, "Input APK")
         
         # 验证 SDK
-        validate_sdk_path(args.sdk_path)
+        validate_file_exists(args.sdk_path, "SDK path")
         
         # 获取密钥库配置
         keystore_type = KeystoreType(args.keystore)

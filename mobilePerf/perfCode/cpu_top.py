@@ -5,17 +5,15 @@ CPU 监控模块
 通过 top 命令采集 CPU 性能数据
 """
 import csv
-import os
 import re
 import sys
 import threading
 import time
 import traceback
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
-BaseDir = os.path.dirname(__file__)
-sys.path.append(os.path.join(BaseDir, '../..'))
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from mobilePerf.perfCode.common.config import config
 from mobilePerf.perfCode.androidDevice import AndroidDevice
 from mobilePerf.perfCode.common.utils import TimeUtils
@@ -166,10 +164,13 @@ class PckCpuInfo:
         if not uid:
             return
         
+        # 缓存列索引，避免循环内重复扫描
+        cpu_idx = self._get_column_index(["CPU]", "CPU%"], 2)
+        
         total = sum(
-            int(line.split()[self._get_column_index(["CPU]", "CPU%"], 2)].replace("%", ""))
+            int(parts[cpu_idx].replace("%", ""))
             for line in self.source.split("\n")
-            if uid in line and len(line.split()) > 2
+            if uid in line and len(parts := line.split()) > cpu_idx
         )
         
         uid_rate = f"{total}%"
@@ -190,7 +191,6 @@ class CpuCollector:
         self._interval = interval
         self._timeout = timeout
         self._stop_event = threading.Event()
-        self.cpu_list: list = []
         self.sdkversion = self._get_sdk_version()
         self._top_pipe = None
         self._thread = None
@@ -241,7 +241,7 @@ class CpuCollector:
             logger.error(f"top command error: {err}")
             return None
         
-        result = out.decode('utf-8').replace('\r', '') if isinstance(out, bytes) else out.replace('\r', '')
+        result = out.replace('\r', '')
         self._save_top_log(result)
         return result
 
@@ -390,7 +390,7 @@ def chart_cpu(x: list, y: list, title: str, filename: str, output_dir: str | Non
 
 def main_cpu(num: int) -> None:
     """测试 CPU 采集"""
-    monitor = CpuMonitor(config.deviceId, [config.package], 20)
+    monitor = CpuMonitor(config.device_id, [config.package], 20)
     monitor.start(TimeUtils.get_current_time_underline())
     time.sleep(20 * num)
     monitor.stop()

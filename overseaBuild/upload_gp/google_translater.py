@@ -3,7 +3,6 @@
 """Google 翻译 API 封装。"""
 import json
 from dataclasses import asdict, dataclass
-from typing import Any
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -23,7 +22,6 @@ _RETRY_CONFIG = Retry(
 
 class TranslationError(Exception):
     """翻译错误"""
-    pass
 
 
 @dataclass
@@ -34,15 +32,6 @@ class TranslationModel:
 
     def to_dict(self) -> dict[str, str]:
         return asdict(self)
-
-
-class ModelEncoder(json.JSONEncoder):
-    """自定义 JSON 编码器。"""
-
-    def default(self, obj: Any) -> Any:
-        if isinstance(obj, TranslationModel):
-            return asdict(obj)
-        return super().default(obj)
 
 
 class GoogleTranslator:
@@ -58,11 +47,6 @@ class GoogleTranslator:
         if not text:
             return text
         
-        if not _API_URL:
-            raise TranslationError(
-                "google_translater.py 第 14 行：_API_URL 未填写，请直接在代码中设置"
-            )
-
         payload = {"target": target_lang, "q": text}
 
         try:

@@ -16,7 +16,6 @@ SUPPORTED_FORMATS = {'.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.webp'}
 
 class ImageConvertError(Exception):
     """图片转换异常"""
-    pass
 
 
 def convert_image(input_path: Path, output_path: Path, quality: int = 95) -> bool:

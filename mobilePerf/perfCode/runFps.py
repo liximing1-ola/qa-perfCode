@@ -4,7 +4,6 @@
 FPS 测试工具 - 自动滑动屏幕模拟用户操作
 """
 import argparse
-import platform
 import random
 import re
 import subprocess
@@ -34,7 +33,7 @@ def get_device() -> str | None:
         result = subprocess.run(['adb', 'devices'], capture_output=True, text=True, check=True)
         match = DEVICE_PATTERN.search(result.stdout)
         return match.group(1) if match else None
-    except (subprocess.CalledProcessError, Exception) as e:
+    except (subprocess.CalledProcessError, OSError) as e:
         print(f"获取设备失败: {e}")
         return None
 
@@ -52,7 +51,7 @@ def get_package_name(device: str, activity: str = 'com.x.x.android.MainActivity'
                     return match.group(1).split()[-1]
         
         return '未找到包名，请先启动应用'
-    except Exception as e:
+    except (subprocess.SubprocessError, OSError) as e:
         return f'获取包名失败: {e}'
 
 

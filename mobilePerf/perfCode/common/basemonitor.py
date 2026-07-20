@@ -21,17 +21,14 @@ class Monitor(ABC):
     @abstractmethod
     def start(self) -> None:
         """开始采集性能数据"""
-        pass
 
     @abstractmethod
     def stop(self) -> None:
         """停止采集性能数据"""
-        pass
 
     @abstractmethod
     def save(self) -> None:
         """保存采集的数据"""
-        pass
 
     def clear(self) -> None:
         """清空已采集的数据"""

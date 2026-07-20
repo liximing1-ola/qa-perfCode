@@ -5,13 +5,11 @@ Logcat 监控模块
 监控应用启动时间和异常日志
 """
 import csv
-import os
 import sys
 import time
 from pathlib import Path
 
-BaseDir = os.path.dirname(__file__)
-sys.path.append(os.path.join(BaseDir, '../..'))
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 from mobilePerf.perfCode.androidDevice import AndroidDevice
 from mobilePerf.perfCode.common.basemonitor import Monitor
