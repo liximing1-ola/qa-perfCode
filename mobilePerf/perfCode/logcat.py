@@ -61,7 +61,6 @@ class LogcatMonitor(Monitor):
 
     def save(self) -> None:
         """保存采集数据（logcat 数据由 _logcat_worker 实时写入文件，此处无需额外操作）"""
-        pass
 
     def set_exception_tags(self, tags: list[str]) -> None:
         """设置异常日志标签列表"""

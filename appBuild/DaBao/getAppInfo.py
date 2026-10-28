@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """获取 APK 基本信息"""
 import argparse
+import logging
 import re
 import subprocess
 import sys
@@ -12,6 +13,10 @@ AAPT_PATH = Path(r'D:/build-tools/build-tools/29.0.2/aapt.exe')
 PACKAGE_PATTERN = re.compile(
     r"package: name='(\S+)' versionCode='(\d+)' versionName='(\S+)'"
 )
+
+# 配置日志
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger(__name__)
 
 
 class AAPTError(Exception):
@@ -27,6 +32,8 @@ def get_apk_info(apk_path: Path, aapt_path: Path) -> dict[str, str]:
         raise FileNotFoundError(f"AAPT 工具不存在：{aapt_path}")
 
     cmd = [str(aapt_path), "dump", "badging", str(apk_path)]
+    logger.debug(f"执行命令: {' '.join(cmd)}")
+    
     result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
 
     if result.returncode != 0:
@@ -49,7 +56,12 @@ def main() -> int:
     parser.add_argument('apk', type=Path, help='APK 文件路径')
     parser.add_argument('-a', '--aapt', type=Path, default=AAPT_PATH,
                         help=f'AAPT 工具路径（默认：{AAPT_PATH}）')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='显示详细调试信息')
     args = parser.parse_args()
+
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     try:
         info = get_apk_info(args.apk, args.aapt)
@@ -58,17 +70,11 @@ def main() -> int:
         print(f"版本名称：{info['version_name']}")
         return 0
 
-    except FileNotFoundError as e:
-        print(f"错误：{e}")
-        return 1
-    except AAPTError as e:
-        print(f"AAPT 错误：{e}")
-        return 1
-    except ValueError as e:
-        print(f"解析错误：{e}")
+    except (FileNotFoundError, AAPTError, ValueError) as e:
+        logger.error(f"{e}")
         return 1
     except Exception as e:
-        print(f"未知错误：{e}")
+        logger.exception(f"未知错误：{e}")
         return 1
 
 

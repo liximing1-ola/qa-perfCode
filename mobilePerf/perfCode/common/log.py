@@ -22,7 +22,7 @@ def create_logger(
     name: str = 'mobileperf',
     log_level: int = logging.DEBUG,
     console_level: int = logging.INFO,
-    log_dir: str = None
+    log_dir: str | None = None
 ) -> logging.Logger:
     """
     创建并配置日志记录器

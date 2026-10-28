@@ -4,12 +4,17 @@
 APK 重新签名工具
 支持通过命令行参数指定输入输出路径
 """
+import logging
 import sys
 import subprocess
 import argparse
 from pathlib import Path
 from enum import Enum
 from dataclasses import dataclass
+
+# 配置日志
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger(__name__)
 
 
 class KeystoreType(Enum):
@@ -41,16 +46,22 @@ KEYSTORE_CONFIGS = {
 DEFAULT_SDK_PATH = r'D:\AndroidSDK\build-tools\28.0.3\apksigner.bat'
 
 
-def validate_file_exists(file_path: str, file_description: str) -> Path:
-    """验证文件是否存在"""
+def validate_file_exists(file_path: str, file_description: str) -> None:
+    """验证文件是否存在
+    
+    :param file_path: 文件路径
+    :param file_description: 文件描述
+    :raises FileNotFoundError: 文件不存在时
+    """
     path = Path(file_path)
     if not path.exists():
-        raise FileNotFoundError(f"{file_description} not found: {file_path}")
-    return path
+        raise FileNotFoundError(f"{file_description} 不存在: {file_path}")
+    if not path.is_file():
+        raise FileNotFoundError(f"{file_description} 不是文件: {file_path}")
 
 
 def build_sign_command(sdk_path: str, keystore: KeystoreConfig, 
-                       apk_path: str, out_path: str) -> list:
+                       apk_path: str, out_path: str) -> list[str]:
     """构建签名命令"""
     if not keystore.password:
         raise ValueError(f"密钥库 {keystore.path} 的密码未设置，请在 KEYSTORE_CONFIGS 中填写")
@@ -64,18 +75,22 @@ def build_sign_command(sdk_path: str, keystore: KeystoreConfig,
     ]
 
 
-def build_verify_command(sdk_path: str, apk_path: str) -> list:
+def build_verify_command(sdk_path: str, apk_path: str) -> list[str]:
     """构建验证命令"""
     return [sdk_path, "verify", "-v", apk_path]
 
 
-def execute_command(cmd: list, operation_name: str) -> None:
+def execute_command(cmd: list[str], operation_name: str) -> None:
     """执行命令并处理错误"""
+    logger.debug(f"执行命令: {' '.join(cmd)}")
     try:
         subprocess.run(cmd, check=True, capture_output=True, text=True)
-        print(f"{operation_name} completed successfully")
+        logger.info(f"{operation_name} 完成")
     except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"{operation_name} failed: {e.stderr}") from e
+        error_msg = e.stderr or e.stdout or "未知错误"
+        raise RuntimeError(f"{operation_name} 失败: {error_msg.strip()}") from e
+    except FileNotFoundError:
+        raise RuntimeError(f"找不到命令: {cmd[0]}，请检查路径是否正确")
 
 
 def sign_apk(sdk_path: str, keystore: KeystoreConfig, 
@@ -94,7 +109,7 @@ def verify_apk(sdk_path: str, apk_path: str) -> None:
 def parse_arguments() -> argparse.Namespace:
     """解析命令行参数"""
     parser = argparse.ArgumentParser(
-        description='APK Re-signing Tool',
+        description='APK 重新签名工具',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
@@ -116,6 +131,11 @@ def parse_arguments() -> argparse.Namespace:
         default=DEFAULT_SDK_PATH,
         help=f'SDK 路径 (默认: {DEFAULT_SDK_PATH})'
     )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='显示详细调试信息'
+    )
     return parser.parse_args()
 
 
@@ -124,11 +144,14 @@ def main() -> int:
     try:
         args = parse_arguments()
         
+        if args.verbose:
+            logging.getLogger().setLevel(logging.DEBUG)
+        
         # 验证输入文件
-        validate_file_exists(args.input, "Input APK")
+        validate_file_exists(args.input, "输入 APK")
         
         # 验证 SDK
-        validate_file_exists(args.sdk_path, "SDK path")
+        validate_file_exists(args.sdk_path, "SDK 工具")
         
         # 获取密钥库配置
         keystore_type = KeystoreType(args.keystore)
@@ -138,23 +161,30 @@ def main() -> int:
         output_dir = Path(args.output).parent
         output_dir.mkdir(parents=True, exist_ok=True)
         
+        logger.info(f"开始签名: {args.input}")
+        logger.info(f"密钥库类型: {keystore_type.value}")
+        
         # 执行签名
         sign_apk(args.sdk_path, keystore, args.input, args.output)
         
         # 验证签名
         verify_apk(args.sdk_path, args.output)
         
-        print('-----------------------sign-----------------------')
+        logger.info(f"签名完成: {args.output}")
+        logger.info('-----------------------sign-----------------------')
         return 0
         
     except FileNotFoundError as e:
-        print(f"Error: {e}")
+        logger.error(f"{e}")
         return 1
     except RuntimeError as e:
-        print(f"Error: {e}")
+        logger.error(f"{e}")
+        return 1
+    except ValueError as e:
+        logger.error(f"{e}")
         return 1
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        logger.exception(f"未知错误: {e}")
         return 1
 
 
